@@ -10,7 +10,7 @@ import {
   TOPICS, TOTAL_WORDS, displayDe, wordKey,
   type Topic, type Word,
 } from '@/lib/deutsch-data'
-import { ArtChip, Bar, SpeakBtn, useTr, type ProgressMap, shuffle } from '@/lib/trainer'
+import { ArtChip, Bar, LevelBadge, LevelChips, SpeakBtn, useTr, type LevelFilter, type ProgressMap, shuffle } from '@/lib/trainer'
 
 // ================= СЛОВА =================
 
@@ -23,8 +23,10 @@ export function WordsTab({ map, setLearned, resetAll, learnedCount }: {
   const L = useL()
   const B = useBi()
   const T = useTr()
+  const [level, setLevel] = useState<LevelFilter>('all')
   const [openTopic, setOpenTopic] = useState<string | null>(null)
 
+  const topics: Topic[] = level === 'all' ? TOPICS : TOPICS.filter((t) => t.level === level)
   const topic = TOPICS.find((t) => t.id === openTopic)
   const learnedIn = (t: Topic) => t.words.filter((w) => map[wordKey(t.id, w)]?.l).length
 
@@ -61,8 +63,9 @@ export function WordsTab({ map, setLearned, resetAll, learnedCount }: {
           >
             ← {L('Усі теми', 'Все темы')}
           </button>
-          <h2 className="mb-4 text-2xl font-black tracking-tight text-zinc-900">
+          <h2 className="mb-4 flex flex-wrap items-center gap-2 text-2xl font-black tracking-tight text-zinc-900">
             {topic.emoji} {B(topic.name)}
+            <LevelBadge level={topic.level} />
           </h2>
           <div className="space-y-2">
             {topic.words.map((w) => {
@@ -114,8 +117,19 @@ export function WordsTab({ map, setLearned, resetAll, learnedCount }: {
           </div>
         </>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {TOPICS.map((t) => {
+        <div>
+          <LevelChips
+            value={level}
+            onChange={setLevel}
+            counts={{
+              all: TOPICS.reduce((n, t) => n + t.words.length, 0),
+              A1: TOPICS.filter((t) => t.level === 'A1').reduce((n, t) => n + t.words.length, 0),
+              A2: TOPICS.filter((t) => t.level === 'A2').reduce((n, t) => n + t.words.length, 0),
+              B1: TOPICS.filter((t) => t.level === 'B1').reduce((n, t) => n + t.words.length, 0),
+            }}
+          />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {topics.map((t) => {
             const learned = learnedIn(t)
             return (
               <button
@@ -127,7 +141,7 @@ export function WordsTab({ map, setLearned, resetAll, learnedCount }: {
                 <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-2xl">
                   {t.emoji}
                 </span>
-                <h3 className="mt-3 font-bold text-zinc-900">{B(t.name)}</h3>
+                <h3 className="mt-3 flex items-center gap-2 font-bold text-zinc-900">{B(t.name)} <LevelBadge level={t.level} /></h3>
                 <p className="mt-1 flex-1 text-xs text-zinc-500">
                   {t.words.length} {L('слів', 'слов')} · {learned} {L('вивчено', 'выучено')}
                 </p>
@@ -137,6 +151,7 @@ export function WordsTab({ map, setLearned, resetAll, learnedCount }: {
               </button>
             )
           })}
+          </div>
         </div>
       )}
     </div>
@@ -152,12 +167,14 @@ export function CardsTab({ map, setLearned }: {
   const L = useL()
   const B = useBi()
   const T = useTr()
+  const [level, setLevel] = useState<LevelFilter>('all')
   const [topicId, setTopicId] = useState(TOPICS[0].id)
   const [shuffled, setShuffled] = useState(false)
   const [idx, setIdx] = useState(0)
   const [flipped, setFlipped] = useState(false)
 
   const topic = TOPICS.find((t) => t.id === topicId)!
+  const topics: Topic[] = level === 'all' ? TOPICS : TOPICS.filter((t) => t.level === level)
   // Порядок карток: звичайний або перемішаний — стабільний для обраної теми/режиму
   const words: Word[] = useMemo(
     () => (shuffled ? shuffle(topic.words) : topic.words),
@@ -175,9 +192,10 @@ export function CardsTab({ map, setLearned }: {
 
   return (
     <div>
+      <LevelChips value={level} onChange={setLevel} />
       {/* Вибір теми */}
       <div className="mb-4 flex flex-wrap gap-1.5">
-        {TOPICS.map((t) => (
+        {topics.map((t) => (
           <button
             key={t.id}
             type="button"
@@ -193,6 +211,7 @@ export function CardsTab({ map, setLearned }: {
             }`}
           >
             {t.emoji} {B(t.name)}
+            <span className="ml-1.5 font-mono text-[10px] opacity-70">{t.level}</span>
           </button>
         ))}
       </div>

@@ -10,7 +10,7 @@
 // ============================================================
 
 import { useCallback, useEffect, useState } from 'react'
-import { useLang } from './i18n'
+import { useLang, useL } from './i18n'
 import { ART_STYLE, type Word } from './deutsch-data'
 
 // ---------- ПРОГРЕС ----------
@@ -147,6 +147,64 @@ export function Bar({ value, tone = 'bg-emerald-500' }: { value: number; tone?: 
   return (
     <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-200">
       <div className={`h-2 rounded-full ${tone} transition-all`} style={{ width: `${Math.max(2, Math.min(100, value))}%` }} />
+    </div>
+  )
+}
+
+// ---------- РІВНІ ----------
+
+import { LEVELS, type Level } from './deutsch-data'
+
+export type LevelFilter = Level | 'all'
+
+const LEVEL_BADGE: Record<Level, string> = {
+  A1: 'bg-emerald-100 text-emerald-800',
+  A2: 'bg-sky-100 text-sky-800',
+  B1: 'bg-violet-100 text-violet-800',
+}
+
+/** Кольоровий чип рівня A1/A2/B1 */
+export function LevelBadge({ level, className = '' }: { level: Level; className?: string }) {
+  return (
+    <span className={`inline-flex shrink-0 items-center rounded-md px-1.5 py-0.5 text-[10px] font-black tracking-wide ${LEVEL_BADGE[level]} ${className}`}>
+      {level}
+    </span>
+  )
+}
+
+/** Чипи-фільтр рівнів: Усі / A1 / A2 / B1 */
+export function LevelChips({ value, onChange, counts }: {
+  value: LevelFilter
+  onChange: (l: LevelFilter) => void
+  counts?: Partial<Record<LevelFilter, number>>
+}) {
+  const L = useL()
+  const items: { id: LevelFilter; label: string }[] = [
+    { id: 'all', label: L('Усі рівні', 'Все уровни') },
+    ...LEVELS.map((lv) => ({ id: lv as LevelFilter, label: lv })),
+  ]
+  return (
+    <div className="mb-4 flex flex-wrap items-center gap-1.5">
+      {items.map(({ id, label }) => (
+        <button
+          key={id}
+          type="button"
+          onClick={() => onChange(id)}
+          className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+            value === id
+              ? 'border-zinc-900 bg-zinc-900 text-white'
+              : 'border-zinc-300 bg-white text-zinc-600 hover:bg-zinc-100'
+          }`}
+        >
+          {id !== 'all' && <span className="mr-1 font-black">{id === 'A1' ? '🟢' : id === 'A2' ? '🔵' : '🟣'}</span>}
+          {label}
+          {counts?.[id] !== undefined && (
+            <span className={`ml-1.5 font-mono text-[10px] ${value === id ? 'text-zinc-300' : 'text-zinc-400'}`}>
+              {counts[id]}
+            </span>
+          )}
+        </button>
+      ))}
     </div>
   )
 }

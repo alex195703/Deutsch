@@ -35,6 +35,21 @@ for (const t of TOPICS) {
 }
 console.log(`Теми: ${TOPICS.length}, слів усього: ${TOTAL_WORDS}, іменників: ${NOUNS.length}`)
 
+// 1b. Розбивка за рівнями + глобальні дублікати між темами (попередження)
+const byLevel: Record<string, number> = {}
+for (const t of TOPICS) byLevel[t.level] = (byLevel[t.level] ?? 0) + t.words.length
+console.log('За рівнями:', Object.entries(byLevel).map(([k, v]) => `${k}=${v}`).join(', '))
+
+const globalDe = new Map<string, string>()
+let globalDupes = 0
+for (const { topic, word } of ALL_WORDS) {
+  if (globalDe.has(word.de)) {
+    globalDupes++
+    if (globalDupes <= 12) console.log(`  WARN: слово «${word.de}» у темах ${globalDe.get(word.de)} і ${topic.id}`)
+  } else globalDe.set(word.de, topic.id)
+}
+if (globalDupes) console.log(`  Увага: глобальних повторів: ${globalDupes}`)
+
 // 2. Гігієна мов: uk без Э/Ы/Ё, ru без Ї/І/Є/Ґ
 const ukBad = /[ЭэЫыЁё]/
 const ruBad = /[ЇїІіЄєҐґ]/

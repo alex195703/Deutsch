@@ -1,12 +1,21 @@
 // ============================================================
-// ДАНІ ТРЕНАЖЕРА НІМЕЦЬКОЇ (рівень A1)
-// Словник: 13 тем, 152 слова і фрази з прикладами.
+// ДАНІ ТРЕНАЖЕРА НІМЕЦЬКОЇ — A1 + A2 + B1 + фрази (Redemittel).
+// Слова беруться з файлів: deutsch-data.ts (A1, тут),
+// deutsch-a2-1/2.ts, deutsch-b1-1/2.ts, deutsch-phrases.ts.
 // Кожне слово: de — німецькою; art/pl — артикль і множина
-// для іменників; uk/ru — переклад; ex — приклад речення.
+// для іменників; uk/ru — переклад; ex — приклад речення (опційно).
 // Українська — перша мова, російська — друга (шар i18n.tsx).
 // ============================================================
 
+import { TOPICS_A2_1 } from './deutsch-a2-1'
+import { TOPICS_A2_2 } from './deutsch-a2-2'
+import { TOPICS_B1_1 } from './deutsch-b1-1'
+import { TOPICS_B1_2 } from './deutsch-b1-2'
+import { TOPICS_PHR } from './deutsch-phrases'
+
 export type Ex = { de: string; uk: string; ru: string }
+
+export type Level = 'A1' | 'A2' | 'B1'
 
 export type Word = {
   de: string
@@ -20,14 +29,16 @@ export type Word = {
 export type Topic = {
   id: string
   emoji: string
+  level: Level
   name: { uk: string; ru: string }
   words: Word[]
 }
 
-export const TOPICS: Topic[] = [
+const TOPICS_A1: Topic[] = [
   {
     id: 'begr',
     emoji: '👋',
+    level: 'A1',
     name: { uk: 'Привітання і ввічливість', ru: 'Приветствия и вежливость' },
     words: [
       { de: 'Hallo', uk: 'Привіт', ru: 'Привет', ex: { de: 'Hallo, wie geht es dir?', uk: 'Привіт, як твої справи?', ru: 'Привет, как твои дела?' } },
@@ -47,6 +58,7 @@ export const TOPICS: Topic[] = [
   {
     id: 'familie',
     emoji: '👨‍👩‍👧',
+    level: 'A1',
     name: { uk: 'Людина і сімʼя', ru: 'Человек и семья' },
     words: [
       { de: 'Mann', art: 'der', pl: 'Männer', uk: 'чоловік', ru: 'мужчина; муж', ex: { de: 'Das ist mein Mann.', uk: 'Це мій чоловік.', ru: 'Это мой муж.' } },
@@ -66,6 +78,7 @@ export const TOPICS: Topic[] = [
   {
     id: 'essen',
     emoji: '🍎',
+    level: 'A1',
     name: { uk: 'Їжа і напої', ru: 'Еда и напитки' },
     words: [
       { de: 'Brot', art: 'das', uk: 'хліб', ru: 'хлеб', ex: { de: 'Das Brot ist frisch.', uk: 'Хліб свіжий.', ru: 'Хлеб свежий.' } },
@@ -85,6 +98,7 @@ export const TOPICS: Topic[] = [
   {
     id: 'zahlen',
     emoji: '🔢',
+    level: 'A1',
     name: { uk: 'Числа', ru: 'Числа' },
     words: [
       { de: 'eins', uk: 'один', ru: 'один' },
@@ -106,6 +120,7 @@ export const TOPICS: Topic[] = [
   {
     id: 'farben',
     emoji: '🎨',
+    level: 'A1',
     name: { uk: 'Кольори', ru: 'Цвета' },
     words: [
       { de: 'rot', uk: 'червоний', ru: 'красный', ex: { de: 'Das Auto ist rot.', uk: 'Автомобіль червоний.', ru: 'Машина красная.' } },
@@ -123,6 +138,7 @@ export const TOPICS: Topic[] = [
   {
     id: 'zeit',
     emoji: '⏰',
+    level: 'A1',
     name: { uk: 'Час', ru: 'Время' },
     words: [
       { de: 'heute', uk: 'сьогодні', ru: 'сегодня', ex: { de: 'Heute bleibe ich zu Hause.', uk: 'Сьогодні я залишаюся вдома.', ru: 'Сегодня я остаюсь дома.' } },
@@ -142,6 +158,7 @@ export const TOPICS: Topic[] = [
   {
     id: 'tage',
     emoji: '📅',
+    level: 'A1',
     name: { uk: 'Дні тижня', ru: 'Дни недели' },
     words: [
       { de: 'Montag', art: 'der', uk: 'понеділок', ru: 'понедельник', ex: { de: 'Am Montag arbeite ich.', uk: 'У понеділок я працюю.', ru: 'В понедельник я работаю.' } },
@@ -157,6 +174,7 @@ export const TOPICS: Topic[] = [
   {
     id: 'haus',
     emoji: '🏠',
+    level: 'A1',
     name: { uk: 'Дім', ru: 'Дом' },
     words: [
       { de: 'Haus', art: 'das', pl: 'Häuser', uk: 'дім; будинок', ru: 'дом', ex: { de: 'Unser Haus ist groß.', uk: 'Наш дім великий.', ru: 'Наш дом большой.' } },
@@ -176,6 +194,7 @@ export const TOPICS: Topic[] = [
   {
     id: 'stadt',
     emoji: '🚋',
+    level: 'A1',
     name: { uk: 'Місто і транспорт', ru: 'Город и транспорт' },
     words: [
       { de: 'Stadt', art: 'die', pl: 'Städte', uk: 'місто', ru: 'город', ex: { de: 'Berlin ist eine große Stadt.', uk: 'Берлін — велике місто.', ru: 'Берлин — большой город.' } },
@@ -195,6 +214,7 @@ export const TOPICS: Topic[] = [
   {
     id: 'arbeit',
     emoji: '📚',
+    level: 'A1',
     name: { uk: 'Робота і навчання', ru: 'Работа и учёба' },
     words: [
       { de: 'Arbeit', art: 'die', pl: 'Arbeiten', uk: 'робота', ru: 'работа', ex: { de: 'Ich gehe zur Arbeit.', uk: 'Я йду на роботу.', ru: 'Я иду на работу.' } },
@@ -214,6 +234,7 @@ export const TOPICS: Topic[] = [
   {
     id: 'verben',
     emoji: '🏃',
+    level: 'A1',
     name: { uk: 'Дієслова на кожен день', ru: 'Глаголы на каждый день' },
     words: [
       { de: 'machen', uk: 'робити', ru: 'делать', ex: { de: 'Was machst du?', uk: 'Що ти робиш?', ru: 'Что ты делаешь?' } },
@@ -233,6 +254,7 @@ export const TOPICS: Topic[] = [
   {
     id: 'adjektive',
     emoji: '🌡️',
+    level: 'A1',
     name: { uk: 'Прикметники', ru: 'Прилагательные' },
     words: [
       { de: 'groß', uk: 'великий', ru: 'большой', ex: { de: 'Unser Haus ist groß.', uk: 'Наш дім великий.', ru: 'Наш дом большой.' } },
@@ -252,6 +274,7 @@ export const TOPICS: Topic[] = [
   {
     id: 'koerper',
     emoji: '🩺',
+    level: 'A1',
     name: { uk: 'Тіло і здоровʼя', ru: 'Тело и здоровье' },
     words: [
       { de: 'Kopf', art: 'der', pl: 'Köpfe', uk: 'голова', ru: 'голова' },
@@ -269,6 +292,19 @@ export const TOPICS: Topic[] = [
     ],
   },
 ]
+
+/** Усі теми трьох рівнів + фрази в одному списку (порядок = порядок рівнів) */
+export const TOPICS: Topic[] = [
+  ...TOPICS_A1,
+  ...TOPICS_A2_1,
+  ...TOPICS_A2_2,
+  ...TOPICS_B1_1,
+  ...TOPICS_B1_2,
+  ...TOPICS_PHR,
+]
+
+/** Рівні для фільтра (порядок = порядок у UI) */
+export const LEVELS = ['A1', 'A2', 'B1'] as const
 
 /** Німецьке слово для показу: з артиклем, якщо він є */
 export function displayDe(w: Word): string {

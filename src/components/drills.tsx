@@ -9,15 +9,16 @@
 import { useCallback, useState } from 'react'
 import { useBi, useL } from '@/lib/i18n'
 import {
-  ALL_WORDS, NOUNS, TOPICS, displayDe, wordKey,
+  ALL_WORDS, NOUNS, displayDe, wordKey,
   type Topic, type Word,
 } from '@/lib/deutsch-data'
 import { PRONOUNS, VERBS, type Verb } from '@/lib/deutsch-grammar'
-import { ArtChip, SpeakBtn, useTr, shuffle, type ProgressMap } from '@/lib/trainer'
+import { ArtChip, LevelChips, SpeakBtn, useTr, type LevelFilter, type ProgressMap, shuffle } from '@/lib/trainer'
 
 // ---------- спільні дрібниці ----------
 
-function ScopeChips({ scope, setScope }: {
+function ScopeChips({ topics, scope, setScope }: {
+  topics: Topic[]
   scope: string
   setScope: (s: string) => void
 }) {
@@ -34,7 +35,7 @@ function ScopeChips({ scope, setScope }: {
       >
         🌍 {L('Всі теми', 'Все темы')}
       </button>
-      {TOPICS.map((t) => (
+      {topics.map((t) => (
         <button
           key={t.id}
           type="button"
@@ -123,6 +124,7 @@ function buildRound(pool: { topic: Topic; word: Word }[], n = 10): Q[] {
 export function QuizTab({ record }: { record: (key: string, ok: boolean) => void }) {
   const L = useL()
   const T = useTr()
+  const [level, setLevel] = useState<LevelFilter>('all')
   const [scope, setScope] = useState('all')
   const [round, setRound] = useState<Q[] | null>(null)
   const [idx, setIdx] = useState(0)
@@ -131,7 +133,12 @@ export function QuizTab({ record }: { record: (key: string, ok: boolean) => void
   const [streak, setStreak] = useState(0)
   const [mistakes, setMistakes] = useState<{ de: string; tr: string }[]>([])
 
-  const pool = scope === 'all' ? ALL_WORDS : ALL_WORDS.filter((a) => a.topic.id === scope)
+  const pool = (scope === 'all' ? ALL_WORDS : ALL_WORDS.filter((a) => a.topic.id === scope)).filter(
+    (a) => level === 'all' || a.topic.level === level,
+  )
+  const allTopics: Topic[] = []
+  for (const a of ALL_WORDS) if (!allTopics.some((t) => t.id === a.topic.id)) allTopics.push(a.topic)
+  const visibleTopics = level === 'all' ? allTopics : allTopics.filter((t) => t.level === level)
 
   const start = useCallback(() => {
     setRound(buildRound(pool))
@@ -146,7 +153,8 @@ export function QuizTab({ record }: { record: (key: string, ok: boolean) => void
 
   return (
     <div>
-      <ScopeChips scope={scope} setScope={(s) => { setScope(s); setRound(null) }} />
+      <LevelChips value={level} onChange={(lv) => { setLevel(lv); setScope('all'); setRound(null) }} />
+      <ScopeChips topics={visibleTopics} scope={scope} setScope={(s) => { setScope(s); setRound(null) }} />
 
       {!round ? (
         <div className="rounded-3xl border border-zinc-200 bg-white p-8 text-center shadow-sm">
@@ -271,44 +279,91 @@ export function QuizTab({ record }: { record: (key: string, ok: boolean) => void
 
 // ================= АРТИКЛІ DER/DIE/DAS =================
 
-type AQ = { word: Word; topicId: string }
+type AQ = { word: Word; topicId: string; options?: string[] }
 
 export function ArticlesTab({ record }: { record: (key: string, ok: boolean) => void }) {
   const L = useL()
   const T = useTr()
+  const [level, setLevel] = useState<LevelFilter>('all')
+  const [mode, setMode] = useState<'art' | 'plural'>('art')
   const [round, setRound] = useState<AQ[] | null>(null)
   const [idx, setIdx] = useState(0)
-  const [chosen, setChosen] = useState<'der' | 'die' | 'das' | null>(null)
+  const [chosen, setChosen] = useState<string | null>(null)
   const [score, setScore] = useState(0)
   const [mistakes, setMistakes] = useState<{ de: string; tr: string }[]>([])
 
+  const nounPool = NOUNS.filter((a) => level === 'all' || a.topic.level === level)
+  const pluralPool = NOUNS.filter((a) => a.word.pl && a.word.pl !== '-')
+
   const start = useCallback(() => {
-    setRound(
-      shuffle(NOUNS)
-        .slice(0, 10)
-        .map((a) => ({ word: a.word, topicId: a.topic.id })),
-    )
+    if (mode === 'art') {
+      setRound(
+        shuffle(nounPool)
+          .slice(0, 10)
+          .map((a) => ({ word: a.word, topicId: a.topic.id })),
+      )
+    } else {
+      const withPl = nounPool.filter((a) => a.word.pl && a.word.pl !== '-')
+      const src = withPl.length >= 10 ? withPl : pluralPool
+      const picked = shuffle(src).slice(0, 10)
+      setRound(
+        picked.map(({ word, topic }) => {
+          const correct = word.pl as string
+          const others = shuffle(
+            pluralPool
+              .filter((x) => x.word.pl && x.word.pl !== correct)
+              .map((x) => x.word.pl as string),
+          )
+          return { word, topicId: topic.id, options: shuffle([correct, ...others.slice(0, 3)]) }
+        }),
+      )
+    }
     setIdx(0)
     setChosen(null)
     setScore(0)
     setMistakes([])
-  }, [])
+  }, [level, mode, nounPool, pluralPool])
 
   const q = round?.[idx]
 
   return (
     <div>
+      <LevelChips value={level} onChange={(lv) => { setLevel(lv); setRound(null) }} />
       {!round ? (
         <div className="rounded-3xl border border-zinc-200 bg-white p-8 text-center shadow-sm">
           <div className="text-5xl">🚦</div>
           <h2 className="mt-3 text-xl font-black text-zinc-900">
-            {L('Артиклі der / die / das', 'Артикли der / die / das')}
+            {L('Артиклі der / die / das і множина', 'Артикли der / die / das и множественное')}
           </h2>
-          <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-zinc-600">
-            {L(
-              'Головний боль A1: рід іменника. 10 слів — виберіть артикль. Кольори-підказки: der — синій, die — рожевий, das — зелений. Відповідь пишеться в прогрес слів.',
-              'Главная боль A1: род существительного. 10 слов — выберите артикль. Цвета-подсказки: der — синий, die — розовый, das — зелёный. Ответ пишется в прогресс слов.',
-            )}
+          <div className="mx-auto mt-4 flex w-fit flex-wrap justify-center gap-1.5">
+            {(
+              [
+                ['art', '📚 ' + L('Артикль', 'Артикль')],
+                ['plural', '➕ ' + L('Множина', 'Множественное')],
+              ] as const
+            ).map(([m, label]) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setMode(m)}
+                className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  mode === m ? 'border-zinc-900 bg-zinc-900 text-white' : 'border-zinc-300 bg-white text-zinc-600 hover:bg-zinc-100'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-zinc-600">
+            {mode === 'art'
+              ? L(
+                  `10 слів з ${nounPool.length} іменників — виберіть артикль. Кольори-підказки: der — синій, die — рожевий, das — зелений. Відповідь пишеться в прогрес слів.`,
+                  `10 слов из ${nounPool.length} существительных — выберите артикль. Цвета-подсказки: der — синий, die — розовый, das — зелёный. Ответ пишется в прогресс слов.`,
+                )
+              : L(
+                  `10 слів з ${pluralPool.length} іменників з множиною — виберіть правильну форму множини.`,
+                  `10 слов из ${pluralPool.length} существительных с множественным — выберите правильную форму множественного числа.`,
+                )}
           </p>
           <button
             type="button"
@@ -327,11 +382,52 @@ export function ArticlesTab({ record }: { record: (key: string, ok: boolean) => 
           </p>
           <div className="rounded-3xl border-2 border-zinc-800 bg-white p-6 text-center shadow-md sm:p-8">
             <p className="text-xs font-bold uppercase tracking-wide text-zinc-400">
-              {L('Оберіть артикль', 'Выберите артикль')}
+              {q.options ? L('Оберіть множину', 'Выберите множественное число') : L('Оберіть артикль', 'Выберите артикль')}
             </p>
-            <p className="mt-3 text-3xl font-black tracking-tight text-zinc-900">{q.word.de}</p>
+            <p className="mt-3 text-3xl font-black tracking-tight text-zinc-900">
+              {q.options ? displayDe(q.word) : q.word.de}
+            </p>
             <p className="mt-1 text-sm font-semibold text-zinc-500">{T(q.word)}</p>
 
+            {q.options ? (
+              <div className="mt-6 grid gap-2 sm:grid-cols-2">
+                {q.options.map((opt) => {
+                  const isCorrect = opt === q.word.pl
+                  const state =
+                    chosen === null ? 'idle' : isCorrect ? 'correct' : chosen === opt ? 'wrong' : 'dim'
+                  return (
+                    <button
+                      key={opt}
+                      type="button"
+                      disabled={chosen !== null}
+                      onClick={() => {
+                        if (chosen !== null) return
+                        setChosen(opt)
+                        const ok = isCorrect
+                        record(`${wordKey(q.topicId, q.word)}#pl`, ok)
+                        if (ok) setScore((s) => s + 1)
+                        else
+                          setMistakes((m) => [
+                            ...m,
+                            { de: `${q.word.art ?? ''} ${q.word.de} → die ${q.word.pl}`, tr: T(q.word) },
+                          ])
+                      }}
+                      className={`rounded-xl border-2 px-4 py-3 text-base font-bold transition-all ${
+                        state === 'idle'
+                          ? 'border-zinc-200 bg-white text-zinc-800 hover:border-zinc-400 hover:bg-zinc-50'
+                          : state === 'correct'
+                            ? 'border-emerald-500 bg-emerald-50 text-emerald-800'
+                            : state === 'wrong'
+                              ? 'border-rose-500 bg-rose-50 text-rose-800'
+                              : 'border-zinc-100 bg-zinc-50 text-zinc-400'
+                      }`}
+                    >
+                      die {opt}
+                    </button>
+                  )
+                })}
+              </div>
+            ) : (
             <div className="mt-6 grid grid-cols-3 gap-2">
               {(['der', 'die', 'das'] as const).map((a) => {
                 const isCorrect = a === q.word.art
@@ -365,15 +461,23 @@ export function ArticlesTab({ record }: { record: (key: string, ok: boolean) => 
                 )
               })}
             </div>
+            )}
 
             {chosen !== null && (
               <div className="mt-5">
+                {q.options ? (
+                  <p className="text-sm text-zinc-600">
+                    <span className="font-bold text-emerald-700">{q.word.art} {q.word.de}</span>
+                    <span className="ml-2 font-mono text-xs text-zinc-500">Pl: die {q.word.pl}</span>
+                  </p>
+                ) : (
                 <p className="text-sm text-zinc-600">
                   <span className="font-bold text-emerald-700">{q.word.art} {q.word.de}</span>
                   {q.word.pl && (
                     <span className="ml-2 font-mono text-xs text-zinc-500">die {q.word.pl}</span>
                   )}
                 </p>
+                )}
                 {q.word.ex && (
                   <p className="mt-2 text-sm leading-relaxed text-zinc-500">
                     <span className="font-semibold text-zinc-700">{q.word.ex.de}</span>{' '}
@@ -405,32 +509,54 @@ export function ArticlesTab({ record }: { record: (key: string, ok: boolean) => 
 
 // ================= ДІЄСЛОВА =================
 
-type VQ = { verb: Verb; pi: number; options: string[] }
+type VKind = 'praesens' | 'praeteritum' | 'partizip'
+type VQ = { verb: Verb; pi: number; options: string[]; kind: VKind }
 
-function buildVerbRound(n = 8): VQ[] {
-  const combos: { v: Verb; pi: number }[] = []
-  for (const v of VERBS) for (let pi = 0; pi < PRONOUNS.length; pi++) combos.push({ v, pi })
-  return shuffle(combos).slice(0, n).map(({ v, pi }) => {
-    const correct = v.forms[pi]
-    const seen = new Set([correct])
-    const opts: string[] = []
-    const add = (s: string) => {
-      if (!seen.has(s) && opts.length < 3) {
-        opts.push(s)
-        seen.add(s)
+function buildVerbRound(n = 8, kind: VKind = 'praesens'): VQ[] {
+  if (kind === 'praesens') {
+    const combos: { v: Verb; pi: number }[] = []
+    for (const v of VERBS) for (let pi = 0; pi < PRONOUNS.length; pi++) combos.push({ v, pi })
+    return shuffle(combos).slice(0, n).map(({ v, pi }) => {
+      const correct = v.forms[pi]
+      const seen = new Set([correct])
+      const opts: string[] = []
+      const add = (s: string) => {
+        if (!seen.has(s) && opts.length < 3) {
+          opts.push(s)
+          seen.add(s)
+        }
       }
-    }
-    shuffle(v.forms.filter((_, i) => i !== pi)).forEach(add)
-    if (opts.length < 3)
-      shuffle(VERBS.filter((x) => x.inf !== v.inf).flatMap((x) => x.forms)).forEach(add)
-    return { verb: v, pi, options: shuffle([correct, ...opts]) }
-  })
+      shuffle(v.forms.filter((_, i) => i !== pi)).forEach(add)
+      if (opts.length < 3)
+        shuffle(VERBS.filter((x) => x.inf !== v.inf).flatMap((x) => x.forms)).forEach(add)
+      return { verb: v, pi, options: shuffle([correct, ...opts]), kind }
+    })
+  }
+  // Präteritum (er-форма) та Partizip II — тільки дієслова з даними
+  const pool = kind === 'praeteritum' ? VERBS.filter((v) => v.pret3) : VERBS.filter((v) => v.part)
+  const answerOf = (v: Verb) => (kind === 'praeteritum' ? (v.pret3 as string) : (v.part as string))
+  return shuffle(pool)
+    .slice(0, n)
+    .map((v) => {
+      const correct = answerOf(v)
+      const seen = new Set([correct])
+      const opts: string[] = []
+      shuffle(pool.filter((x) => x.inf !== v.inf)).forEach((x) => {
+        const a = answerOf(x)
+        if (!seen.has(a) && opts.length < 3) {
+          opts.push(a)
+          seen.add(a)
+        }
+      })
+      return { verb: v, pi: 2, options: shuffle([correct, ...opts]), kind }
+    })
 }
 
 export function VerbsTab() {
   const L = useL()
   const T = useTr()
   const [mode, setMode] = useState<'drill' | 'table'>('drill')
+  const [tense, setTense] = useState<VKind>('praesens')
 
   // Таблиця
   const [sel, setSel] = useState(VERBS[0].inf)
@@ -444,12 +570,12 @@ export function VerbsTab() {
   const [mistakes, setMistakes] = useState<{ de: string; tr: string }[]>([])
 
   const start = useCallback(() => {
-    setRound(buildVerbRound(8))
+    setRound(buildVerbRound(8, tense))
     setIdx(0)
     setChosen(null)
     setScore(0)
     setMistakes([])
-  }, [])
+  }, [tense])
 
   const q = round?.[idx]
 
@@ -480,13 +606,47 @@ export function VerbsTab() {
           <div className="rounded-3xl border border-zinc-200 bg-white p-8 text-center shadow-sm">
             <div className="text-5xl">⚡</div>
             <h2 className="mt-3 text-xl font-black text-zinc-900">
-              {L('Відмінювання дієслів у Präsens', 'Спряжение глаголов в Präsens')}
+              {tense === 'praesens'
+                ? L('Відмінювання дієслів у Präsens', 'Спряжение глаголов в Präsens')
+                : tense === 'praeteritum'
+                  ? L('Präteritum — минуле', 'Präteritum — прошедшее')
+                  : L('Partizip II — для Perfekt', 'Partizip II — для Perfekt')}
             </h2>
-            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-zinc-600">
-              {L(
-                `${VERBS.length} дієслів, включно з sein, haben і сильними. 8 форм на раунд: займенник + інфінітив → оберіть правильну форму.`,
-                `${VERBS.length} глаголов, включая sein, haben и сильные. 8 форм на раунд: местоимение + инфинитив → выберите правильную форму.`,
-              )}
+            <div className="mx-auto mt-4 flex w-fit flex-wrap justify-center gap-1.5">
+              {(
+                [
+                  ['praesens', '⏱ ' + L('Präsens', 'Präsens')],
+                  ['praeteritum', '📜 ' + L('Präteritum', 'Präteritum')],
+                  ['partizip', '⏳ ' + L('Partizip II', 'Partizip II')],
+                ] as const
+              ).map(([k, label]) => (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => setTense(k)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    tense === k ? 'border-zinc-900 bg-zinc-900 text-white' : 'border-zinc-300 bg-white text-zinc-600 hover:bg-zinc-100'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-zinc-600">
+              {tense === 'praesens'
+                ? L(
+                    `${VERBS.length} дієслів, включно з sein, haben, модальними та сильними. 8 форм на раунд: займенник + інфінітив → оберіть правильну форму.`,
+                    `${VERBS.length} глаголов, включая sein, haben, модальные и сильные. 8 форм на раунд: местоимение + инфинитив → выберите правильную форму.`,
+                  )
+                : tense === 'praeteritum'
+                  ? L(
+                      'er/sie/es у минулому: оберіть форму Präteritum до дієслова.',
+                      'er/sie/es в прошедшем: выберите форму Präteritum к глаголу.',
+                    )
+                  : L(
+                      'Оберіть Partizip II — потрібне для Perfekt: haben/sein + Partizip II.',
+                      'Выберите Partizip II — нужно для Perfekt: haben/sein + Partizip II.',
+                    )}
             </p>
             <button
               type="button"
@@ -505,17 +665,26 @@ export function VerbsTab() {
             </p>
             <div className="rounded-3xl border-2 border-zinc-800 bg-white p-6 text-center shadow-md sm:p-8">
               <p className="text-xs font-bold uppercase tracking-wide text-zinc-400">
-                {L('Оберіть правильну форму', 'Выберите правильную форму')}
+                {q.kind === 'praesens'
+                  ? L('Оберіть правильну форму', 'Выберите правильную форму')
+                  : q.kind === 'praeteritum'
+                    ? L('Оберіть форму Präteritum (er/sie/es)', 'Выберите форму Präteritum (er/sie/es)')
+                    : L('Оберіть Partizip II', 'Выберите Partizip II')}
               </p>
               <p className="mt-3 text-2xl font-black tracking-tight text-zinc-900">
-                {PRONOUNS[q.pi]} + <span className="text-sky-700">{q.verb.inf}</span>
+                {q.kind === 'praesens'
+                  ? <>{PRONOUNS[q.pi]} + <span className="text-sky-700">{q.verb.inf}</span></>
+                  : q.kind === 'praeteritum'
+                    ? <><span className="text-sky-700">{q.verb.inf}</span> (er/sie/es …)</>
+                    : <><span className="text-sky-700">{q.verb.inf}</span> → …</>}
               </p>
               <p className="mt-1 text-sm font-semibold text-zinc-500">
                 {q.verb.uk} / {q.verb.ru}
               </p>
               <div className="mt-6 grid gap-2 sm:grid-cols-2">
                 {q.options.map((opt) => {
-                  const isCorrect = opt === q.verb.forms[q.pi]
+                  const correctForm = q.kind === 'praesens' ? q.verb.forms[q.pi] : q.kind === 'praeteritum' ? (q.verb.pret3 as string) : (q.verb.part as string)
+                  const isCorrect = opt === correctForm
                   const state =
                     chosen === null ? 'idle' : isCorrect ? 'correct' : chosen === opt ? 'wrong' : 'dim'
                   return (
@@ -530,7 +699,14 @@ export function VerbsTab() {
                         else
                           setMistakes((m) => [
                             ...m,
-                            { de: `${PRONOUNS[q.pi]} ${q.verb.forms[q.pi]} (${q.verb.inf})`, tr: `${q.verb.uk} / ${q.verb.ru}` },
+                            {
+                              de: q.kind === 'praesens'
+                                ? `${PRONOUNS[q.pi]} ${q.verb.forms[q.pi]} (${q.verb.inf})`
+                                : q.kind === 'praeteritum'
+                                  ? `er/sie/es ${q.verb.pret3} (${q.verb.inf})`
+                                  : `${q.verb.part} (${q.verb.inf})`,
+                              tr: `${q.verb.uk} / ${q.verb.ru}`,
+                            },
                           ])
                       }}
                       className={`rounded-xl border-2 px-4 py-3 text-base font-bold transition-all ${
@@ -551,7 +727,11 @@ export function VerbsTab() {
               {chosen !== null && (
                 <div className="mt-5">
                   <p className="text-sm font-semibold text-emerald-700">
-                    {PRONOUNS[q.pi]} {q.verb.forms[q.pi]}
+                    {q.kind === 'praesens'
+                      ? `${PRONOUNS[q.pi]} ${q.verb.forms[q.pi]}`
+                      : q.kind === 'praeteritum'
+                        ? `er/sie/es ${q.verb.pret3}`
+                        : `${q.verb.part} (${q.verb.aux === 'sein' ? 'sein' : 'haben'})`}
                   </p>
                   {q.verb.note && (
                     <p className="mt-1 text-xs leading-relaxed text-zinc-500">
@@ -610,6 +790,24 @@ export function VerbsTab() {
                     </td>
                   </tr>
                 ))}
+                {verb.pret3 && (
+                  <tr className="border-b border-zinc-100">
+                    <td className="py-2 pr-4 font-semibold text-zinc-500">er/sie/es (Präteritum)</td>
+                    <td className="py-2 font-black text-violet-700">{verb.pret3}</td>
+                    <td className="py-2 text-right">
+                      <SpeakBtn text={`er ${verb.pret3}`} className="h-7 w-7 text-sm" />
+                    </td>
+                  </tr>
+                )}
+                {verb.part && (
+                  <tr className="border-b border-zinc-100 last:border-0">
+                    <td className="py-2 pr-4 font-semibold text-zinc-500">Partizip II ({verb.aux === 'sein' ? 'sein' : 'haben'})</td>
+                    <td className="py-2 font-black text-sky-700">{verb.part}</td>
+                    <td className="py-2 text-right">
+                      <SpeakBtn text={verb.part} className="h-7 w-7 text-sm" />
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
             {verb.note && (
