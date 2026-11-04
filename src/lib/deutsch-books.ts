@@ -22,14 +22,26 @@ export type GlossEntry = { uk: string; ru: string }
 
 export type BookPara = { de: string; uk: string; ru: string }
 
+export type BookChapter = {
+  title: { uk: string; ru: string }
+  paragraphs: BookPara[]
+}
+
 export type Book = {
   id: string
   emoji: string
   level: 'A1' | 'A2' | 'B1'
   title: { uk: string; ru: string }
-  paragraphs: BookPara[]
+  /** Короткий опис книжки для картки в списку */
+  blurb: { uk: string; ru: string }
+  chapters: BookChapter[]
   /** ключі — нижнім регістром; слова й фрази через пробіл */
   glossary: Record<string, GlossEntry>
+}
+
+/** Усі абзаци книжки підряд (для тестів і статистики) */
+export function bookParas(b: Book): BookPara[] {
+  return b.chapters.flatMap((c) => c.paragraphs)
 }
 
 export const BOOKS: Book[] = BOOKS_LIST
@@ -178,6 +190,169 @@ export const BASE_GLOSSARY: Record<string, GlossEntry> = {
   gerade: { uk: 'зараз; якраз', ru: 'сейчас; как раз' },
   brauchen: { uk: 'потребувати; мати потребу', ru: 'нуждаться' },
   braucht: { uk: 'потрібен; потребує', ru: 'нужен; нуждается' },
+  // --- час і місце (загальні) ---
+  immer: { uk: 'завжди', ru: 'всегда' },
+  heute: { uk: 'сьогодні', ru: 'сегодня' },
+  gestern: { uk: 'учора; учорашній день', ru: 'вчера' },
+  morgen: { uk: 'завтра; ранок', ru: 'завтра; утро' },
+  oft: { uk: 'часто', ru: 'часто' },
+  fast: { uk: 'майже', ru: 'почти' },
+  da: { uk: 'тут; там', ru: 'здесь; там' },
+  dort: { uk: 'там', ru: 'там' },
+  dabei: { uk: 'при цьому; поруч', ru: 'при этом; рядом' },
+  darin: { uk: 'у ньому (усередині)', ru: 'в нём (внутри)' },
+  darauf: { uk: 'на ньому; після цього', ru: 'на нём; после этого' },
+  trotzdem: { uk: 'попри це; все одно', ru: 'несмотря на это; всё равно' },
+  außerdem: { uk: 'крім того', ru: 'кроме того' },
+  laut: { uk: 'голосно; гучний', ru: 'громко; громкий' },
+  leise: { uk: 'тихо; тихий', ru: 'тихо; тихий' },
+  vorsichtig: { uk: 'обережно', ru: 'осторожно' },
+  hinten: { uk: 'ззаду', ru: 'сзади' },
+  vorne: { uk: 'спереду', ru: 'впереди' },
+  oben: { uk: 'нагорі; зверху', ru: 'наверху; сверху' },
+  unten: { uk: 'унизу', ru: 'внизу' },
+  draußen: { uk: 'надворі; ззовні', ru: 'на улице; снаружи' },
+  drinnen: { uk: 'усередині (приміщення)', ru: 'внутри (помещения)' },
+  'guten appetit': { uk: 'смачного!', ru: 'приятного аппетита!' },
+  'ein bisschen': { uk: 'трохи', ru: 'немного' },
+  'immer wieder': { uk: 'знову і знову', ru: 'снова и снова' },
+  // --- артиклі та займенникові форми ---
+  der: { uk: 'означений артикль (м. рід)', ru: 'определённый артикль (м. р.)' },
+  die: { uk: 'означений артикль (ж. рід; множина)', ru: 'определённый артикль (ж. р.; множ.)' },
+  das: { uk: 'означений артикль (с. рід)', ru: 'определённый артикль (ср. р.)' },
+  des: { uk: 'означений артикль (Genitiv)', ru: 'определённый артикль (род. падеж)' },
+  den: { uk: 'означений артикль (Akk. м. р.)', ru: 'определённый артикль (акк. м. р.)' },
+  dem: { uk: 'означений артикль (Dativ)', ru: 'определённый артикль (дат. падеж)' },
+  ein: { uk: 'неозначений артикль; один', ru: 'неопределённый артикль; один' },
+  eine: { uk: 'неозначений артикль; одна', ru: 'неопределённый артикль; одна' },
+  einen: { uk: 'неозначений артикль (Akk. м. р.)', ru: 'неопределённый артикль (акк. м. р.)' },
+  einem: { uk: 'неозначений артикль (Dativ)', ru: 'неопределённый артикль (дат. падеж)' },
+  einer: { uk: 'неозначений артикль (Dativ ж. р.); один (з)', ru: 'неопределённый артикль (дат. ж. р.); один (из)' },
+  eines: { uk: 'неозначений артикль (Genitiv)', ru: 'неопределённый артикль (род. падеж)' },
+  ihn: { uk: 'його (Akk.)', ru: 'его (акк.)' },
+  seine: { uk: 'його; своя', ru: 'его; своя' },
+  seinen: { uk: 'його; свій (Akk.)', ru: 'его; свой (акк.)' },
+  seinem: { uk: 'його; своєму (Dativ)', ru: 'его; своему (дат.)' },
+  seiner: { uk: 'його; своєї (Dativ ж. р.)', ru: 'его; своей (дат. ж. р.)' },
+  seines: { uk: 'його; свого (Genitiv)', ru: 'его; своего (род.)' },
+  ihrer: { uk: 'її; їх (Dativ ж. р.)', ru: 'её; их (дат. ж. р.)' },
+  ihrem: { uk: 'її; їх (Dativ)', ru: 'её; их (дат.)' },
+  meinem: { uk: 'моєму (Dativ)', ru: 'моему (дат.)' },
+  // --- часті прислівники, частки, прикметники ---
+  ab: { uk: 'геть; від (absteigen — злазити)', ru: 'прочь; с (absteigen — слезать)' },
+  hin: { uk: 'туди (hin und zurück — туди й назад)', ru: 'туда (hin und zurück — туда и обратно)' },
+  zurück: { uk: 'назад', ru: 'назад' },
+  hinaus: { uk: 'надвір; назовні', ru: 'наружу; во двор' },
+  entlang: { uk: 'вздовж', ru: 'вдоль' },
+  vorbei: { uk: 'повз; минати (vorbeikommen — заходити)', ru: 'мимо; проходить (vorbeikommen — заходить)' },
+  durch: { uk: 'через; крізь', ru: 'через; сквозь' },
+  frei: { uk: 'вільний; вільно', ru: 'свободный; свободно' },
+  genau: { uk: 'точно; саме', ru: 'точно; именно' },
+  gemeinsam: { uk: 'разом; спільно', ru: 'вместе; сообща' },
+  allein: { uk: 'один; сам', ru: 'один; сам' },
+  total: { uk: 'повністю; зовсім', ru: 'полностью; совсем' },
+  kaum: { uk: 'ледве; навряд чи', ru: 'едва; вряд ли' },
+  erst: { uk: 'лише; спершу; тільки', ru: 'только; сначала; лишь' },
+  letzt: { uk: 'останній; минулий', ru: 'последний; прошлый' },
+  dritt: { uk: 'третій', ru: 'третий' },
+  zweit: { uk: 'другий (за порядком)', ru: 'второй (по порядку)' },
+  beide: { uk: 'обидва; обидві', ru: 'оба; обе' },
+  zweimal: { uk: 'двічі', ru: 'дважды' },
+  überall: { uk: 'усюди', ru: 'везде' },
+  genug: { uk: 'досить; достатньо', ru: 'достаточно' },
+  vorher: { uk: 'заздалегідь; перед тим', ru: 'заранее; перед этим' },
+  hier: { uk: 'тут', ru: 'здесь' },
+  still: { uk: 'тихий; нерухомий', ru: 'тихий; неподвижный' },
+  ungeduldig: { uk: 'нетерплячий', ru: 'нетерпеливый' },
+  warm: { uk: 'теплий', ru: 'тёплый' },
+  // --- часті іменники ---
+  zeit: { uk: 'час (die Zeit)', ru: 'время (die Zeit)' },
+  ende: { uk: 'кінець (zu Ende — до кінця)', ru: 'конец (zu Ende — до конца)' },
+  mittagessen: { uk: 'обід', ru: 'обед' },
+  frühstück: { uk: 'сніданок', ru: 'завтрак' },
+  abendessen: { uk: 'вечеря', ru: 'ужин' },
+  mittags: { uk: 'опівдні; у обід', ru: 'в полдень; в обед' },
+  abends: { uk: 'увечері', ru: 'вечером' },
+  mama: { uk: 'мама', ru: 'мама' },
+  eltern: { uk: 'батьки (die Eltern)', ru: 'родители (die Eltern)' },
+  foto: { uk: 'фотографія', ru: 'фотография' },
+  fotos: { uk: 'фотографії (das Foto)', ru: 'фотографии (das Foto)' },
+  eis: { uk: 'морозиво', ru: 'мороженое' },
+  saft: { uk: 'сік', ru: 'сок' },
+  park: { uk: 'парк', ru: 'парк' },
+  see: { uk: 'озеро', ru: 'озеро' },
+  ball: { uk: 'мʼяч', ru: 'мяч' },
+  fußball: { uk: 'футбол', ru: 'футбол' },
+  mathe: { uk: 'математика (розм.)', ru: 'математика (разг.)' },
+  sport: { uk: 'фізкультура; спорт', ru: 'физкультура; спорт' },
+  caf: { uk: 'кафе (das Café)', ru: 'кафе (das Café)' },
+  fernsehen: { uk: 'дивитися телевізор', ru: 'смотреть телевизор' },
+  salat: { uk: 'салат; листя салату', ru: 'салат; листья салата' },
+  garten: { uk: 'сад', ru: 'сад' },
+  ordnung: { uk: 'порядок (in Ordnung — гаразд)', ru: 'порядок (in Ordnung — в порядке)' },
+  herr: { uk: 'пан; пан ... (звернення)', ru: 'господин; господин ...' },
+  idee: { uk: 'ідея', ru: 'идея' },
+  freundin: { uk: 'подруга', ru: 'подруга' },
+  // --- часті дієслова (форм у тексті) ---
+  steht: { uk: 'встає; стоїть (aufstehen/stehen)', ru: 'встаёт; стоит (aufstehen/stehen)' },
+  wartet: { uk: 'чекає (warten)', ru: 'ждёт (warten)' },
+  warten: { uk: 'чекати', ru: 'ждать' },
+  sagt: { uk: 'каже (sagen)', ru: 'говорит (sagen)' },
+  gesagt: { uk: 'сказав (sagen)', ru: 'сказал (sagen)' },
+  bekommt: { uk: 'отримує (bekommen)', ru: 'получает (bekommen)' },
+  öffnet: { uk: 'відкриває (öffnen)', ru: 'открывает (öffnen)' },
+  liegt: { uk: 'лежить; розташований (liegen)', ru: 'лежит; находится (liegen)' },
+  sitzt: { uk: 'сидить (sitzen)', ru: 'сидит (sitzen)' },
+  ruft: { uk: 'кличе; кричить (rufen)', ru: 'зовёт; кричит (rufen)' },
+  bellt: { uk: 'гавкає (bellen)', ru: 'лает (bellen)' },
+  schaut: { uk: 'дивиться (schauen)', ru: 'смотрит (schauen)' },
+  hört: { uk: 'чує; слухає (hören)', ru: 'слышит; слушает (hören)' },
+  lacht: { uk: 'сміється (lachen)', ru: 'смеётся (lachen)' },
+  holt: { uk: 'дістає; забирає (holen)', ru: 'достаёт; приносит (holen)' },
+  fällt: { uk: 'падає (fallen)', ru: 'падает (fallen)' },
+  springt: { uk: 'стрибає (springen)', ru: 'прыгает (springen)' },
+  springen: { uk: 'стрибати; стрибають', ru: 'прыгать; прыгают' },
+  singen: { uk: 'співати; співають', ru: 'петь; поют' },
+  trifft: { uk: 'зустрічає (treffen)', ru: 'встречает (treffen)' },
+  zeigt: { uk: 'показує (zeigen)', ru: 'показывает (zeigen)' },
+  zeigen: { uk: 'показувати', ru: 'показывать' },
+  besuchen: { uk: 'відвідувати', ru: 'посещать' },
+  erzählt: { uk: 'розповідає (erzählen)', ru: 'рассказывает (erzählen)' },
+  // --- друга хвиля частотних слів ---
+  dazu: { uk: 'до цього; додатково', ru: 'к этому; кроме того' },
+  halb: { uk: 'пів (часу): halb acht = пів на восьму', ru: 'пол (времени): halb acht = полвосьмого' },
+  fern: { uk: 'телевізор (fernsehen — дивитися телевізор)', ru: 'телевизор (fernsehen — смотреть телевизор)' },
+  sein: { uk: 'бути; його; свій', ru: 'быть; его; свой' },
+  bekommen: { uk: 'отримувати', ru: 'получать' },
+  stehen: { uk: 'стояти; стоять (місц.)', ru: 'стоять' },
+  jedem: { uk: 'кожному (Dativ)', ru: 'каждому (дат.)' },
+  arm: { uk: 'рука (від долоні до плеча); обійми', ru: 'рука (от кисти до плеча); объятия' },
+  brötchen: { uk: 'булочка', ru: 'булочка' },
+  daneben: { uk: 'поруч; поруч із тим', ru: 'рядом; рядом с этим' },
+  wirft: { uk: 'кидає (werfen)', ru: 'бросает (werfen)' },
+  gras: { uk: 'трава', ru: 'трава' },
+  nachmittags: { uk: 'після обіду; вдень', ru: 'после обеда; днём' },
+  schließen: { uk: 'зачиняти; закривати', ru: 'закрывать' },
+  tor: { uk: 'ворота; хвіртка', ru: 'ворота; калитка' },
+  offen: { uk: 'відчинений; відкритий', ru: 'открытый' },
+  sucht: { uk: 'шукає (suchen)', ru: 'ищет (suchen)' },
+  hängen: { uk: 'вішати; висіти', ru: 'вешать; висеть' },
+  helfen: { uk: 'допомагати', ru: 'помогать' },
+  klara: { uk: 'жіноче імʼя (подруга Лени)', ru: 'женское имя (подруга Лены)' },
+  klingelt: { uk: 'дзвонить; дзвенить (klingeln)', ru: 'звонит; звенит (klingeln)' },
+  bäckerei: { uk: 'пекарня', ru: 'пекарня' },
+  tut: { uk: 'робить (tun); tut weh — болить', ru: 'делает (tun); tut weh — болит' },
+  weh: { uk: 'біль (weh tun — боліти)', ru: 'боль (weh tun — болеть)' },
+  melde: { uk: 'повідомляю (sich melden — давати знати)', ru: 'сообщаю (sich melden — дать знать)' },
+  frag: { uk: 'питай (fragen — питати)', ru: 'спроси (fragen — спрашивать)' },
+  supermarkt: { uk: 'супермаркет', ru: 'супермаркет' },
+  zettel: { uk: 'папірець; записка', ru: 'листок; записка' },
+  stock: { uk: 'поверх (im dritten Stock — на третьому поверсі)', ru: 'этаж (im dritten Stock — на третьем этаже)' },
+  dank: { uk: 'подяка (zum Dank — на подяку)', ru: 'благодарность (zum Dank — в благодарность)' },
+  pizza: { uk: 'піца', ru: 'пицца' },
+  lachen: { uk: 'сміятися', ru: 'смеяться' },
+  öffnen: { uk: 'відкривати', ru: 'открывать' },
+  licht: { uk: 'світло', ru: 'свет' },
   // --- назви ---
   köln: { uk: 'Кельн (місто)', ru: 'Кёльн (город)' },
   münchen: { uk: 'Мюнхен (місто)', ru: 'Мюнхен (город)' },
@@ -302,11 +477,25 @@ export function lookupWord(core: string, book: Book): ReaderEntry | null {
     const e = readerIndex.get(base)
     if (e) return e
   }
-  for (const c of candidates(core)) {
+  // Морфологічні варіанти: спершу глосарії (erste → erst,
+  // nassen → nasser), потім словник тренажера (wohnt → wohnen)
+  const cands = candidates(core)
+  for (const c of cands) {
+    const g2 = book.glossary[c] ?? BASE_GLOSSARY[c]
+    if (g2) return { de: '', uk: g2.uk, ru: g2.ru }
+  }
+  for (const c of cands) {
     const e = readerIndex.get(c)
     if (e) return e
   }
   return null
+}
+
+/** Статистика книжки: розділи, абзаци, кількість німецьких слів */
+export function bookStats(b: Book): { chapters: number; paras: number; words: number } {
+  const paras = bookParas(b)
+  const words = paras.reduce((n, p) => n + tokenize(p.de).filter((t) => t.isWord).length, 0)
+  return { chapters: b.chapters.length, paras: paras.length, words }
 }
 
 export type Hit = { start: number; end: number; matched: string; entry: ReaderEntry }
