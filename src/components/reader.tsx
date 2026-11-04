@@ -5,11 +5,12 @@
 // торкніться слова або словосполучення — унизу зʼявиться
 // картка з перекладом (укр/рос), граматичними нотатками
 // і озвучкою. Словник = усі слова тренажера + глосарій книжки.
+// Кожна книжка поділена на розділи з навігацією.
 // ============================================================
 
-import { Fragment, useMemo, useState, type ReactNode } from 'react'
+import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useBi, useL, useLang } from '@/lib/i18n'
-import { BOOKS, lookupAt, tokenize, type Book, type Hit, type Tok } from '@/lib/deutsch-books'
+import { BOOKS, bookStats, lookupAt, tokenize, type Book, type Hit, type Tok } from '@/lib/deutsch-books'
 import { ArtChip, LevelBadge, SpeakBtn } from '@/lib/trainer'
 
 type TapFn = (h: Hit) => void
@@ -30,33 +31,35 @@ export function BooksTab() {
           )}
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
-          {BOOKS.map((b) => (
-            <button
-              key={b.id}
-              type="button"
-              onClick={() => setOpenId(b.id)}
-              className="group flex flex-col rounded-2xl border border-zinc-200 bg-white p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-amber-400 hover:shadow-md"
-            >
-              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-2xl">
-                {b.emoji}
-              </span>
-              <h3 className="mt-3 flex flex-wrap items-center gap-2 font-bold text-zinc-900">
-                {B(b.title)} <LevelBadge level={b.level} />
-              </h3>
-              <p className="mt-1 flex-1 text-xs leading-relaxed text-zinc-500">
-                {b.paragraphs[0]?.de.split('. ')[0]}.
-              </p>
-              <p className="mt-2 text-xs font-semibold text-amber-700 group-hover:underline">
-                {b.paragraphs.length} {L('абзаців', 'абзацев')} · {L('читати →', 'читать →')}
-              </p>
-            </button>
-          ))}
+          {BOOKS.map((b) => {
+            const st = bookStats(b)
+            return (
+              <button
+                key={b.id}
+                type="button"
+                onClick={() => setOpenId(b.id)}
+                className="group flex flex-col rounded-2xl border border-zinc-200 bg-white p-5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-amber-400 hover:shadow-md"
+              >
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-2xl">
+                  {b.emoji}
+                </span>
+                <h3 className="mt-3 flex flex-wrap items-center gap-2 font-bold text-zinc-900">
+                  {B(b.title)} <LevelBadge level={b.level} />
+                </h3>
+                <p className="mt-1 flex-1 text-xs leading-relaxed text-zinc-500">{B(b.blurb)}</p>
+                <p className="mt-2 text-xs font-semibold text-amber-700 group-hover:underline">
+                  {st.chapters} {L('розділів', 'глав')} · {st.paragraphs} {L('абзаців', 'абзацев')} · ~{st.words}{' '}
+                  {L('слів', 'слов')} · {L('читати →', 'читать →')}
+                </p>
+              </button>
+            )
+          })}
         </div>
       </div>
     )
   }
 
-  return <Reader book={book} onBack={() => setOpenId(null)} />
+  return <Reader key={book.id} book={book} onBack={() => setOpenId(null)} />
 }
 
 // ---------- ЧИТАННЯ ----------
@@ -65,10 +68,16 @@ function Reader({ book, onBack }: { book: Book; onBack: () => void }) {
   const L = useL()
   const B = useBi()
   const lang = useLang()
+  const [chIdx, setChIdx] = useState(0)
   const [showTrans, setShowTrans] = useState(false)
   const [hit, setHit] = useState<Hit | null>(null)
 
-  const paras = useMemo(() => book.paragraphs.map((p) => tokenize(p.de)), [book])
+  const chapter = book.chapters[chIdx] ?? book.chapters[0]
+  const paras = useMemo(() => chapter.paragraphs.map((p) => tokenize(p.de)), [chapter])
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [chIdx])
 
   return (
     <div>
@@ -84,7 +93,36 @@ function Reader({ book, onBack }: { book: Book; onBack: () => void }) {
         {book.emoji} {B(book.title)} <LevelBadge level={book.level} />
       </h2>
 
-      <label className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-600 shadow-sm hover:bg-zinc-50">
+      {/* Навігація розділами */}
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <span className="text-xs font-bold uppercase tracking-wide text-zinc-400">
+          {L('Розділи', 'Главы')}
+        </span>
+        <div className="flex gap-1.5 overflow-x-auto pb-1">
+          {book.chapters.map((c, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => setChIdx(i)}
+              title={B(c.title)}
+              className={
+                'h-8 w-8 shrink-0 rounded-lg border text-xs font-bold transition-colors ' +
+                (i === chIdx
+                  ? 'border-zinc-900 bg-zinc-900 text-white'
+                  : 'border-zinc-200 bg-white text-zinc-600 hover:border-zinc-400 hover:bg-zinc-50')
+              }
+            >
+              {i + 1}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <h3 className="mt-3 text-lg font-extrabold tracking-tight text-zinc-900">
+        {chIdx + 1}. {B(chapter.title)}
+      </h3>
+
+      <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-600 shadow-sm hover:bg-zinc-50">
         <input
           type="checkbox"
           checked={showTrans}
@@ -99,15 +137,38 @@ function Reader({ book, onBack }: { book: Book; onBack: () => void }) {
           <div key={pi} className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-5">
             <p className="text-[1.05rem] leading-loose text-zinc-800">
               {renderTokens(toks, book, (h) => setHit(h))}
-              <SpeakBtn text={book.paragraphs[pi].de} className="ml-1 h-7 w-7 align-middle text-sm" />
+              <SpeakBtn text={chapter.paragraphs[pi].de} className="ml-1 h-7 w-7 align-middle text-sm" />
             </p>
             {showTrans && (
               <p className="mt-2 border-l-2 border-amber-300 pl-3 text-sm leading-relaxed text-zinc-500">
-                {lang === 'uk' ? book.paragraphs[pi].uk : book.paragraphs[pi].ru}
+                {lang === 'uk' ? chapter.paragraphs[pi].uk : chapter.paragraphs[pi].ru}
               </p>
             )}
           </div>
         ))}
+      </div>
+
+      {/* Внизу: попередній/наступний розділ */}
+      <div className="mt-5 flex items-center justify-between gap-3">
+        <button
+          type="button"
+          disabled={chIdx === 0}
+          onClick={() => setChIdx((i) => i - 1)}
+          className="rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 shadow-sm transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          ← {chIdx > 0 ? B(book.chapters[chIdx - 1].title) : L('Початок', 'Начало')}
+        </button>
+        <span className="shrink-0 text-xs font-bold text-zinc-400">
+          {chIdx + 1} / {book.chapters.length}
+        </span>
+        <button
+          type="button"
+          disabled={chIdx >= book.chapters.length - 1}
+          onClick={() => setChIdx((i) => i + 1)}
+          className="rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 shadow-sm transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {chIdx < book.chapters.length - 1 ? B(book.chapters[chIdx + 1].title) : L('Кінець', 'Конец')} →
+        </button>
       </div>
 
       <p className="mt-4 text-center text-xs text-zinc-400">
