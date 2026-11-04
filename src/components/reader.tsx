@@ -12,6 +12,7 @@ import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useBi, useL, useLang } from '@/lib/i18n'
 import { BOOKS, bookStats, lookupAt, tokenize, type Book, type Hit, type Tok } from '@/lib/deutsch-books'
 import { ArtChip, LevelBadge, SpeakBtn } from '@/lib/trainer'
+import { gChapter } from '@/lib/gamify'
 
 type TapFn = (h: Hit) => void
 
@@ -48,7 +49,7 @@ export function BooksTab() {
                 </h3>
                 <p className="mt-1 flex-1 text-xs leading-relaxed text-zinc-500">{B(b.blurb)}</p>
                 <p className="mt-2 text-xs font-semibold text-amber-700 group-hover:underline">
-                  {st.chapters} {L('розділів', 'глав')} · {st.paragraphs} {L('абзаців', 'абзацев')} · ~{st.words}{' '}
+                  {st.chapters} {L('розділів', 'глав')} · {st.paras} {L('абзаців', 'абзацев')} · ~{st.words}{' '}
                   {L('слів', 'слов')} · {L('читати →', 'читать →')}
                 </p>
               </button>
@@ -78,6 +79,11 @@ function Reader({ book, onBack }: { book: Book; onBack: () => void }) {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [chIdx])
+
+  // Прочитаний розділ: XP + бонус за дочитану книжку (gamify.ts)
+  useEffect(() => {
+    gChapter(book.id, chIdx, book.chapters.length)
+  }, [book.id, chIdx, book.chapters.length])
 
   return (
     <div>

@@ -14,6 +14,9 @@ import {
 } from '@/lib/deutsch-data'
 import { PRONOUNS, VERBS, type Verb } from '@/lib/deutsch-grammar'
 import { ArtChip, LevelChips, SpeakBtn, useTr, type LevelFilter, type ProgressMap, shuffle } from '@/lib/trainer'
+import { gAnswer, type Kind } from '@/lib/gamify'
+
+type RecordFn = (key: string, ok: boolean, kind: Kind) => void
 
 // ---------- спільні дрібниці ----------
 
@@ -121,7 +124,7 @@ function buildRound(pool: { topic: Topic; word: Word }[], n = 10): Q[] {
   })
 }
 
-export function QuizTab({ record }: { record: (key: string, ok: boolean) => void }) {
+export function QuizTab({ record }: { record: RecordFn }) {
   const L = useL()
   const T = useTr()
   const [level, setLevel] = useState<LevelFilter>('all')
@@ -215,7 +218,7 @@ export function QuizTab({ record }: { record: (key: string, ok: boolean) => void
                       if (chosen !== null) return
                       setChosen(i)
                       const ok = isCorrect
-                      record(wordKey(q.topicId, q.word), ok)
+                      record(wordKey(q.topicId, q.word), ok, 'quiz')
                       if (ok) {
                         setScore((s) => s + 1)
                         setStreak((s) => s + 1)
@@ -281,7 +284,7 @@ export function QuizTab({ record }: { record: (key: string, ok: boolean) => void
 
 type AQ = { word: Word; topicId: string; options?: string[] }
 
-export function ArticlesTab({ record }: { record: (key: string, ok: boolean) => void }) {
+export function ArticlesTab({ record }: { record: RecordFn }) {
   const L = useL()
   const T = useTr()
   const [level, setLevel] = useState<LevelFilter>('all')
@@ -404,7 +407,7 @@ export function ArticlesTab({ record }: { record: (key: string, ok: boolean) => 
                         if (chosen !== null) return
                         setChosen(opt)
                         const ok = isCorrect
-                        record(`${wordKey(q.topicId, q.word)}#pl`, ok)
+                        record(`${wordKey(q.topicId, q.word)}#pl`, ok, 'plural')
                         if (ok) setScore((s) => s + 1)
                         else
                           setMistakes((m) => [
@@ -442,7 +445,7 @@ export function ArticlesTab({ record }: { record: (key: string, ok: boolean) => 
                       if (chosen !== null) return
                       setChosen(a)
                       const ok = isCorrect
-                      record(wordKey(q.topicId, q.word), ok)
+                      record(wordKey(q.topicId, q.word), ok, 'article')
                       if (ok) setScore((s) => s + 1)
                       else setMistakes((m) => [...m, { de: `${q.word.art} ${q.word.de}`, tr: T(q.word) }])
                     }}
@@ -695,6 +698,7 @@ export function VerbsTab() {
                       onClick={() => {
                         if (chosen !== null) return
                         setChosen(opt)
+                        gAnswer(isCorrect, 'verb') // XP/досягнення дієслівних тренувань
                         if (isCorrect) setScore((s) => s + 1)
                         else
                           setMistakes((m) => [

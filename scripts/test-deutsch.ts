@@ -4,9 +4,14 @@
 // в uk-полях не повинно бути російських букв (Э/э, Ы/ы, Ё/ё),
 // в ru-полях — українських (Ї, І, Є, Ґ та малих).
 // ============================================================
-import { TOPICS, ALL_WORDS, NOUNS, TOTAL_WORDS, displayDe } from '../src/lib/deutsch-data'
+import { TOPICS, ALL_WORDS, NOUNS, TOTAL_WORDS, displayDe, wordKey, type Level } from '../src/lib/deutsch-data'
 import { VERBS, PRONOUNS, GRAMMAR } from '../src/lib/deutsch-grammar'
 import { BOOKS, BASE_GLOSSARY, bookParas, tokenize, lookupAt } from '../src/lib/deutsch-books'
+import {
+  ACHIEVEMENTS, RANKS, XP, TOPIC_DONE,
+  rankFor, nextRank, dailyStreakFrom, todayStr, topicMastery,
+  buildSnap, type Kind, type Snap,
+} from '../src/lib/gamify'
 
 let errors = 0
 function fail(msg: string): void {
@@ -164,6 +169,95 @@ for (const b of BOOKS) {
   if (uniqMiss.length) console.log(`  без перекладу (${uniqMiss.length}): ${uniqMiss.slice(0, 200).join(', ')}`)
   if (pct < 85) fail(`низьке покриття книжки ${b.id}: ${pct}%`)
 }
+
+// 9. Гейміфікація: ранги, серії днів, досягнення, XP-економіка
+console.log('\n=== Гейміфікація ===')
+
+// 9a. Ранги: зростають, без дублікатів, старт із 0
+let prevMin = -1
+const rankDe = new Set<string>()
+for (const r of RANKS) {
+  if (r.min <= prevMin) fail(`ранги не зростають: ${r.de} (${r.min})`)
+  prevMin = r.min
+  if (rankDe.has(r.de)) fail(`дублікат рангу: ${r.de}`)
+  rankDe.add(r.de)
+  if (!r.name.uk.trim() || !r.name.ru.trim()) fail(`ранг без перекладу: ${r.de}`)
+}
+if (RANKS[0].min !== 0) fail('перший ранг має починатися з 0 XP')
+if (rankFor(0).de !== 'A1.1') fail('rankFor(0) ≠ A1.1')
+if (rankFor(RANKS[RANKS.length - 1].min).de !== RANKS[RANKS.length - 1].de) fail('rankFor(max) не останній')
+if (nextRank(RANKS[RANKS.length - 1].min) !== undefined) fail('nextRank(max) має бути undefined')
+if (nextRank(0)?.de !== RANKS[1].de) fail('nextRank(0) ≠ другий ранг')
+console.log(`Ранги: ${RANKS.map((r) => `${r.de}@${r.min}`).join(' → ')}`)
+
+// 9b. Серія днів: сьогодні/вчора/розриви/7 днів
+const T = todayStr()
+const dayOffset = (n: number): string => {
+  const d = new Date(T + 'T12:00:00')
+  d.setDate(d.getDate() + n)
+  return todayStr(d)
+}
+if (dailyStreakFrom([T], T) !== 1) fail('серія 1 день рахується неправильно')
+if (dailyStreakFrom([T, dayOffset(-1)], T) !== 2) fail('серія 2 дні рахується неправильно')
+if (dailyStreakFrom([dayOffset(-1)], T) !== 1) fail('тільки вчорашній день: серія має бути 1')
+if (dailyStreakFrom([T, dayOffset(-2)], T) !== 1) fail('розрив у днях не скидає серію')
+const week = Array.from({ length: 7 }, (_, i) => dayOffset(i - 6))
+if (dailyStreakFrom(week, T) !== 7) fail('серія 7 днів підряд рахується неправильно')
+
+// 9c. Освоєність тем: порожня карта → 0, повна карта теми → зараховано
+const masteryEmpty = topicMastery({})
+for (const lv of ['A1', 'A2', 'B1'] as Level[])
+  if (masteryEmpty[lv].done !== 0) fail(`порожній прогрес не має давати освоєних тем (${lv})`)
+const firstTopic = TOPICS[0]
+const fullMap: Record<string, { l?: 1 }> = {}
+for (const w of firstTopic.words) fullMap[wordKey(firstTopic.id, w)] = { l: 1 }
+const masteryOne = topicMastery(fullMap)
+if (masteryOne[firstTopic.level].done < 1) fail(`повністю вивчена тема не зарахована (${firstTopic.id})`)
+
+// 9d. Досягнення: унікальні id, умови спрацьовують на порозі
+const aIds = new Set<string>()
+for (const a of ACHIEVEMENTS) {
+  if (aIds.has(a.id)) fail(`дублікат досягнення: ${a.id}`)
+  aIds.add(a.id)
+  if (!a.name.uk.trim() || !a.desc.ru.trim()) fail(`досягнення без перекладу: ${a.id}`)
+}
+const baseSnap: Snap = {
+  xp: 0, ansC: 0, bestStreak: 0, learned: 0, streakDays: 0, totalDays: 0,
+  chapters: 0, booksRead: 0,
+  kinds: { quiz: 0, article: 0, plural: 0, verb: 0 },
+  topics: { A1: { done: 0, total: 1 }, A2: { done: 0, total: 1 }, B1: { done: 0, total: 1 } },
+}
+const thresholds: [string, Partial<Snap>][] = [
+  ['first', { ansC: 1 }], ['a50', { ansC: 50 }], ['a200', { ansC: 200 }], ['a500', { ansC: 500 }],
+  ['st10', { bestStreak: 10 }], ['st25', { bestStreak: 25 }],
+  ['w25', { learned: 25 }], ['w100', { learned: 100 }], ['w300', { learned: 300 }],
+  ['art30', { kinds: { quiz: 0, article: 30, plural: 0, verb: 0 } }],
+  ['read1', { chapters: 1 }], ['book1', { booksRead: 1 }], ['day7', { streakDays: 7 }],
+  ['pathA1', { topics: { A1: { done: 1, total: 1 }, A2: { done: 0, total: 1 }, B1: { done: 0, total: 1 } } }],
+]
+for (const [id, patch] of thresholds) {
+  const a = ACHIEVEMENTS.find((x) => x.id === id)
+  if (!a) { fail(`немає досягнення ${id} для тесту порогу`); continue }
+  const at = { ...baseSnap, ...patch } as Snap
+  if (!a.cond(at)) fail(`умова ${id} не спрацювала на порозі`)
+  if (a.cond(baseSnap)) fail(`умова ${id} спрацювала на порожньому стані`)
+}
+console.log(`Досягнень: ${ACHIEVEMENTS.length}, рангів: ${RANKS.length}, TOPIC_DONE=${Math.round(TOPIC_DONE * 100)}%`)
+
+// 9e. XP-економіка: максимум з реальних джерел має покривати найвищий ранг
+const chaptersTotal = BOOKS.reduce((n, b) => n + b.chapters.length, 0)
+const maxReal = TOTAL_WORDS * XP.learnWord + chaptersTotal * XP.chapter + BOOKS.length * XP.bookDone
+const topRank = RANKS[RANKS.length - 1].min
+if (maxReal < topRank) fail(`максимальний ранг ${topRank} XP недосяжний без вправ (максимум із слів/книжок ${maxReal})`)
+console.log(`XP: слів ${TOTAL_WORDS}×${XP.learnWord} + розділів ${chaptersTotal}×${XP.chapter} + книжок ${BOOKS.length}×${XP.bookDone} = ${maxReal} (топ-ранг ${topRank})`)
+
+// 9f. buildSnap на порожньому стані не падає (поза браузером)
+const emptySnap = buildSnap({
+  xp: 0, ansC: 0, ansW: 0, bestStreak: 0, curStreak: 0, days: [],
+  kinds: { quiz: 0, article: 0, plural: 0, verb: 0 }, chapters: [], learnedSeen: [], unlocked: {},
+})
+if (emptySnap.xp !== 0 || emptySnap.learned < 0) fail('buildSnap повертає сміття на порожньому стані')
+void (['quiz', 'article', 'plural', 'verb'] as Kind[]) // перевірка типу Kind існує
 
 console.log(errors === 0 ? '\nOK — усі перевірки пройдено ✔' : `\nПОМИЛОК: ${errors} ✘`)
 if (errors > 0) process.exit(1)
