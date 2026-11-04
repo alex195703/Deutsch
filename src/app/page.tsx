@@ -3,10 +3,11 @@
 // ============================================================
 // DEUTSCH A1 — тренажер німецької мови для початківців.
 // ------------------------------------------------------------
-// Шість вкладок: Слова (71 тема трьох рівнів · 1 419 слова),
+// Сім вкладок: Слова (71 тема трьох рівнів · 1 419 слова),
 // Картки (фліп-картки з озвучкою), Вікторина (переклад
-// урозтріч), Артиклі (der/die/das), Дієслова (Präsens) і
-// Граматика (шпаргалка). Прогрес — у браузері (localStorage),
+// урозтріч), Артиклі (der/die/das), Дієслова (Präsens),
+// Граматика (шпаргалка) і Читанка (книжки, де тап по слову
+// показує переклад). Прогрес — у браузері (localStorage),
 // вибір мови — лише в адресі (?lang), шар i18n.tsx.
 // ============================================================
 
@@ -15,11 +16,13 @@ import { LangSwitch, useL, useTitle } from '@/lib/i18n'
 import { NOUNS, TOTAL_WORDS } from '@/lib/deutsch-data'
 import { GRAMMAR, VERBS } from '@/lib/deutsch-grammar'
 import { useProgress } from '@/lib/trainer'
+import { BOOKS } from '@/lib/deutsch-books'
 import { CardsTab, WordsTab } from '@/components/words-cards'
 import { ArticlesTab, QuizTab, VerbsTab } from '@/components/drills'
 import { GrammarTab } from '@/components/grammar'
+import { BooksTab } from '@/components/reader'
 
-type Tab = 'words' | 'cards' | 'quiz' | 'articles' | 'verbs' | 'grammar'
+type Tab = 'words' | 'cards' | 'quiz' | 'articles' | 'verbs' | 'grammar' | 'books'
 
 export default function DeutschTrainer() {
   const L = useL()
@@ -34,6 +37,7 @@ export default function DeutschTrainer() {
     { id: 'articles', label: `🚦 ${L('Артиклі', 'Артикли')} ${NOUNS.length}` },
     { id: 'verbs', label: `⚡ ${L('Дієслова', 'Глаголы')} ${VERBS.length}` },
     { id: 'grammar', label: `📖 ${L('Граматика', 'Грамматика')} ${GRAMMAR.length}` },
+    { id: 'books', label: `📕 ${L('Читанка', 'Книги')} ${BOOKS.length}` },
   ]
 
   return (
@@ -57,8 +61,8 @@ export default function DeutschTrainer() {
           </h1>
           <p className="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-zinc-600 sm:text-base">
             {L(
-              'Слова з прикладами й озвучкою, картки, вікторина, артиклі, дієслова та шпаргалка з граматики — усе для впевненого старту з німецькою. Прогрес зберігається у вашому браузері.',
-              'Слова с примерами и озвучкой, карточки, викторина, артикли, глаголы и шпаргалка по грамматике — всё для уверенного старта с немецким. Прогресс сохраняется в вашем браузере.',
+              'Слова з прикладами й озвучкою, картки, вікторина, артиклі, дієслова, шпаргалка з граматики та читанка, де кожне слово показує переклад за торканням. Прогрес зберігається у вашому браузері.',
+              'Слова с примерами и озвучкой, карточки, викторина, артикли, глаголы, шпаргалка по грамматике и книжки, где каждое слово показывает перевод по касанию. Прогресс сохраняется в вашем браузере.',
             )}
           </p>
           <p className="mt-2 text-xs font-semibold text-emerald-700">
@@ -93,6 +97,7 @@ export default function DeutschTrainer() {
         {tab === 'articles' && <ArticlesTab record={record} />}
         {tab === 'verbs' && <VerbsTab />}
         {tab === 'grammar' && <GrammarTab />}
+        {tab === 'books' && <BooksTab />}
       </main>
 
       <footer className="mt-auto border-t border-zinc-200 bg-white py-4">

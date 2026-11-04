@@ -6,6 +6,7 @@
 // ============================================================
 import { TOPICS, ALL_WORDS, NOUNS, TOTAL_WORDS, displayDe } from '../src/lib/deutsch-data'
 import { VERBS, PRONOUNS, GRAMMAR } from '../src/lib/deutsch-grammar'
+import { BOOKS, BASE_GLOSSARY, tokenize, lookupAt } from '../src/lib/deutsch-books'
 
 let errors = 0
 function fail(msg: string): void {
@@ -100,6 +101,60 @@ if (displayDe(mann) !== 'der Mann') fail(`displayDe(Mann) = "${displayDe(mann)}"
 // 7. Розкид іменників для тренажера артиклів: усі три роди мають бути представлені
 const arts = new Set(NOUNS.map((n) => n.word.art))
 for (const a of ['der', 'die', 'das']) if (!arts.has(a as 'der' | 'die' | 'das')) fail(`немає іменників роду ${a}`)
+
+// 8. Читанка: книжки, глосарії, гігієна мов і покриття перекладом
+console.log('\n=== Читанка ===')
+const ukBad2 = /[ЭэЫыЁё]/
+const ruBad2 = /[ЇїІіЄєҐґ]/
+for (const [k, g] of Object.entries(BASE_GLOSSARY)) {
+  if (!g.uk.trim() || !g.ru.trim()) fail(`базовий глосарій, порожній переклад: ${k}`)
+  if (ukBad2.test(g.uk)) fail(`рос. літери в базовому глосарії uk «${k}»: "${g.uk}"`)
+  if (ruBad2.test(g.ru)) fail(`укр. літери в базовому глосарії ru «${k}»: "${g.ru}"`)
+}
+const bids = new Set<string>()
+for (const b of BOOKS) {
+  if (bids.has(b.id)) fail(`дублікат книжки: ${b.id}`)
+  bids.add(b.id)
+  if (!b.paragraphs.length) fail(`книжка без абзаців: ${b.id}`)
+  if (!b.title.uk.trim() || !b.title.ru.trim()) fail(`книжка без перекладу назви: ${b.id}`)
+  const bad = (name: string, uk: string, ru: string) => {
+    if (!uk.trim() || !ru.trim()) fail(`неповний переклад: ${b.id}/${name}`)
+    if (ukBad2.test(uk)) fail(`рос. літери в uk «${b.id}/${name}»: "${uk}"`)
+    if (ruBad2.test(ru)) fail(`укр. літери в ru «${b.id}/${name}»: "${ru}"`)
+  }
+  b.paragraphs.forEach((p, i) => bad(`абзац${i + 1}`, p.uk, p.ru))
+  for (const [k, g] of Object.entries(b.glossary)) bad(`глосарій:${k}`, g.uk, g.ru)
+
+  let total = 0
+  let hitCount = 0
+  const miss: string[] = []
+  for (const p of b.paragraphs) {
+    const toks = tokenize(p.de)
+    let i = 0
+    while (i < toks.length) {
+      if (!toks[i].isWord) {
+        i++
+        continue
+      }
+      const r = lookupAt(toks, i, b)
+      total++
+      if (r) {
+        hitCount++
+        i = r.end + 1
+      } else {
+        miss.push(toks[i].core)
+        i++
+      }
+    }
+  }
+  const pct = total ? Math.round((hitCount / total) * 100) : 0
+  const uniqMiss = [...new Set(miss)].slice(0, 12).join(', ')
+  console.log(
+    `${b.emoji} ${b.id} (${b.level}): ${b.paragraphs.length} абзаців, покриття перекладом ${pct}%` +
+      (uniqMiss ? `; без перекладу: ${uniqMiss}` : ''),
+  )
+  if (pct < 65) fail(`низьке покриття книжки ${b.id}: ${pct}%`)
+}
 
 console.log(errors === 0 ? '\nOK — усі перевірки пройдено ✔' : `\nПОМИЛОК: ${errors} ✘`)
 if (errors > 0) process.exit(1)
