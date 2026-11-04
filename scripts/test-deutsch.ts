@@ -6,7 +6,7 @@
 // ============================================================
 import { TOPICS, ALL_WORDS, NOUNS, TOTAL_WORDS, displayDe } from '../src/lib/deutsch-data'
 import { VERBS, PRONOUNS, GRAMMAR } from '../src/lib/deutsch-grammar'
-import { BOOKS, BASE_GLOSSARY, tokenize, lookupAt } from '../src/lib/deutsch-books'
+import { BOOKS, BASE_GLOSSARY, bookParas, tokenize, lookupAt } from '../src/lib/deutsch-books'
 
 let errors = 0
 function fail(msg: string): void {
@@ -102,7 +102,7 @@ if (displayDe(mann) !== 'der Mann') fail(`displayDe(Mann) = "${displayDe(mann)}"
 const arts = new Set(NOUNS.map((n) => n.word.art))
 for (const a of ['der', 'die', 'das']) if (!arts.has(a as 'der' | 'die' | 'das')) fail(`немає іменників роду ${a}`)
 
-// 8. Читанка: книжки, глосарії, гігієна мов і покриття перекладом
+// 8. Читанка: книжки, розділи, глосарії, гігієна мов і покриття перекладом
 console.log('\n=== Читанка ===')
 const ukBad2 = /[ЭэЫыЁё]/
 const ruBad2 = /[ЇїІіЄєҐґ]/
@@ -115,45 +115,54 @@ const bids = new Set<string>()
 for (const b of BOOKS) {
   if (bids.has(b.id)) fail(`дублікат книжки: ${b.id}`)
   bids.add(b.id)
-  if (!b.paragraphs.length) fail(`книжка без абзаців: ${b.id}`)
   if (!b.title.uk.trim() || !b.title.ru.trim()) fail(`книжка без перекладу назви: ${b.id}`)
+  if (!b.blurb?.uk.trim() || !b.blurb?.ru.trim()) fail(`книжка без опису: ${b.id}`)
+  if (ukBad2.test(b.blurb.uk)) fail(`рос. літери в описі uk: ${b.id}`)
+  if (ruBad2.test(b.blurb.ru)) fail(`укр. літери в описі ru: ${b.id}`)
+  if (!b.chapters.length) fail(`книжка без розділів: ${b.id}`)
   const bad = (name: string, uk: string, ru: string) => {
     if (!uk.trim() || !ru.trim()) fail(`неповний переклад: ${b.id}/${name}`)
     if (ukBad2.test(uk)) fail(`рос. літери в uk «${b.id}/${name}»: "${uk}"`)
     if (ruBad2.test(ru)) fail(`укр. літери в ru «${b.id}/${name}»: "${ru}"`)
   }
-  b.paragraphs.forEach((p, i) => bad(`абзац${i + 1}`, p.uk, p.ru))
-  for (const [k, g] of Object.entries(b.glossary)) bad(`глосарій:${k}`, g.uk, g.ru)
-
   let total = 0
   let hitCount = 0
   const miss: string[] = []
-  for (const p of b.paragraphs) {
-    const toks = tokenize(p.de)
-    let i = 0
-    while (i < toks.length) {
-      if (!toks[i].isWord) {
-        i++
-        continue
+  b.chapters.forEach((ch, ci) => {
+    bad(`р${ci + 1}.назва`, ch.title.uk, ch.title.ru)
+    if (!ch.paragraphs.length) fail(`порожній розділ ${ci + 1}: ${b.id}`)
+    ch.paragraphs.forEach((p, pi) => {
+      bad(`р${ci + 1}/абзац${pi + 1}`, p.uk, p.ru)
+      const toks = tokenize(p.de)
+      let i = 0
+      while (i < toks.length) {
+        if (!toks[i].isWord) {
+          i++
+          continue
+        }
+        const r = lookupAt(toks, i, b)
+        total++
+        if (r) {
+          hitCount++
+          i = r.end + 1
+        } else {
+          miss.push(toks[i].core)
+          i++
+        }
       }
-      const r = lookupAt(toks, i, b)
-      total++
-      if (r) {
-        hitCount++
-        i = r.end + 1
-      } else {
-        miss.push(toks[i].core)
-        i++
-      }
-    }
-  }
+    })
+  })
+  for (const [k, g] of Object.entries(b.glossary)) bad(`глосарій:${k}`, g.uk, g.ru)
+
   const pct = total ? Math.round((hitCount / total) * 100) : 0
-  const uniqMiss = [...new Set(miss)].slice(0, 12).join(', ')
+  const paras = bookParas(b)
+  const words = paras.reduce((n, p) => n + tokenize(p.de).filter((t) => t.isWord).length, 0)
   console.log(
-    `${b.emoji} ${b.id} (${b.level}): ${b.paragraphs.length} абзаців, покриття перекладом ${pct}%` +
-      (uniqMiss ? `; без перекладу: ${uniqMiss}` : ''),
+    `${b.emoji} ${b.id} (${b.level}): ${b.chapters.length} розділів, ${paras.length} абзаців, ~${words} слів, покриття перекладом ${pct}%`,
   )
-  if (pct < 65) fail(`низьке покриття книжки ${b.id}: ${pct}%`)
+  const uniqMiss = [...new Set(miss)]
+  if (uniqMiss.length) console.log(`  без перекладу (${uniqMiss.length}): ${uniqMiss.slice(0, 200).join(', ')}`)
+  if (pct < 85) fail(`низьке покриття книжки ${b.id}: ${pct}%`)
 }
 
 console.log(errors === 0 ? '\nOK — усі перевірки пройдено ✔' : `\nПОМИЛОК: ${errors} ✘`)
