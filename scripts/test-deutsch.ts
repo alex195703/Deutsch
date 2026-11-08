@@ -7,6 +7,11 @@
 import { TOPICS, ALL_WORDS, NOUNS, TOTAL_WORDS, displayDe, wordKey, type Level } from '../src/lib/deutsch-data'
 import { VERBS, PRONOUNS, GRAMMAR } from '../src/lib/deutsch-grammar'
 import { BOOKS, BASE_GLOSSARY, bookParas, tokenize, lookupAt } from '../src/lib/deutsch-books'
+import { IDIOM_GROUPS, IDIOM_TOTAL } from '../src/lib/deutsch-idioms'
+import {
+  ADJS_C, NOUNS_C, PRONOUNS_C, TIMES_C, VERBS_C,
+  buildSentence, randomBuilt, ukPastForm, ruPastForm, allowedNouns, slotFor,
+} from '../src/lib/deutsch-builder'
 import {
   ACHIEVEMENTS, RANKS, XP, TOPIC_DONE,
   rankFor, nextRank, dailyStreakFrom, todayStr, topicMastery,
@@ -170,10 +175,154 @@ for (const b of BOOKS) {
   if (pct < 85) fail(`низьке покриття книжки ${b.id}: ${pct}%`)
 }
 
-// 9. Гейміфікація: ранги, серії днів, досягнення, XP-економіка
+// 9. Живі фрази: повнота перекладів, гігієна мов, дублікати
+console.log('\n=== Живі фрази ===')
+{
+  const seen = new Set<string>()
+  for (const g of IDIOM_GROUPS) {
+    if (!g.items.length) fail(`порожня група фраз: ${g.id}`)
+    if (!g.name.uk.trim() || !g.name.ru.trim()) fail(`група без назви: ${g.id}`)
+    for (const it of g.items) {
+      if (seen.has(it.de)) fail(`дублікат фрази: ${it.de}`)
+      seen.add(it.de)
+      if (!it.uk.trim() || !it.ru.trim()) fail(`фраза без перекладу: ${g.id}/${it.de}`)
+      if (ukBad.test(it.uk)) fail(`рос. літери в uk фрази «${it.de}»: "${it.uk}"`)
+      if (ruBad.test(it.ru)) fail(`укр. літери в ru фрази «${it.de}»: "${it.ru}"`)
+      if (it.note) {
+        if (!it.note.uk.trim() || !it.note.ru.trim()) fail(`неповна нотатка: ${it.de}`)
+        if (ukBad.test(it.note.uk)) fail(`рос. літери в uk нотатки «${it.de}»`)
+        if (ruBad.test(it.note.ru)) fail(`укр. літери в ru нотатки «${it.de}»`)
+      }
+    }
+  }
+  console.log(`Груп: ${IDIOM_GROUPS.length}, фраз: ${IDIOM_TOTAL}`)
+}
+
+// 10. Конструктор: граматичний двигун
+console.log('\n=== Конструктор ===')
+{
+  // 10a. Цілісність даних
+  const vids = new Set<string>()
+  for (const v of VERBS_C) {
+    if (vids.has(v.id)) fail(`дублікат дієслова-конструктора: ${v.id}`)
+    vids.add(v.id)
+    if (v.forms.length !== 6) fail(`${v.inf}: форм ${v.forms.length}, а має 6`)
+    for (const f of v.forms) if (!f.trim()) fail(`${v.inf}: порожня форма`)
+    if ((v.kind === 'trans' || v.kind === 'move') && (!v.uk6 || v.uk6.length !== 6 || !v.ru6 || v.ru6.length !== 6))
+      fail(`${v.inf}: неповні форми перекладу Präsens`)
+    if ((v.kind === 'trans' || v.kind === 'move') && (!v.ukFut6 || v.ukFut6.length !== 6))
+      fail(`${v.inf}: неповні форми перекладу Futur`)
+    if ((v.kind === 'trans' || v.kind === 'move') && (!v.ukPastM || !v.ruPastM || !v.part))
+      fail(`${v.inf}: немає Partizip II або перекладу минулого`)
+    for (const o of v.obj ?? []) if (!NOUNS_C.some((n) => n.id === o.id)) fail(`${v.inf}: невідомий об'єкт ${o.id}`)
+  }
+  const nids = new Set<string>()
+  for (const n of NOUNS_C) {
+    if (nids.has(n.id)) fail(`дублікат іменника-конструктора: ${n.id}`)
+    nids.add(n.id)
+    if (!n.uk.trim() || !n.ru.trim() || !n.ukAkk.trim() || !n.ruAkk.trim()) fail(`неповний іменник: ${n.id}`)
+  }
+  for (const a of ADJS_C) {
+    for (const g of ['m', 'f', 'n', 'p'] as const) {
+      if (!a.uk[g].trim() || !a.ru[g].trim()) fail(`неповний прикметник: ${a.de}/${g}`)
+    }
+  }
+  if (PRONOUNS_C.length !== 10 || NOUNS_C.length !== 10 || ADJS_C.length !== 10 || VERBS_C.length !== 10)
+    fail(`групи мають бути по 10: ${PRONOUNS_C.length}/${NOUNS_C.length}/${ADJS_C.length}/${VERBS_C.length}`)
+
+  // 10b. Точкові перевірки граматики
+  const eq = (label: string, got: string, want: string) => {
+    if (got !== want) fail(`${label}: "${got}", а очікувалось "${want}"`)
+  }
+  eq('Präsens ich lesen', buildSentence({ verb: 'lesen', pron: 'ich', noun: 'buch', time: 'heute', tense: 'praesens', neg: false }).de, 'Ich lese heute das Buch.')
+  eq('Präsens neg', buildSentence({ verb: 'lesen', pron: 'ich', noun: 'buch', time: 'heute', tense: 'praesens', neg: true }).de, 'Ich lese heute das Buch nicht.')
+  eq('Perfekt', buildSentence({ verb: 'lesen', pron: 'ich', noun: 'buch', time: 'gestern', tense: 'vergangen', neg: false }).de, 'Ich habe gestern das Buch gelesen.')
+  eq('Perfekt neg', buildSentence({ verb: 'lesen', pron: 'ich', noun: 'buch', time: 'gestern', tense: 'vergangen', neg: true }).de, 'Ich habe gestern das Buch nicht gelesen.')
+  eq('Futur', buildSentence({ verb: 'lesen', pron: 'ich', noun: 'buch', time: 'morgen', tense: 'zukunft', neg: false }).de, 'Ich werde morgen das Buch lesen.')
+  eq('du sehen', buildSentence({ verb: 'sehen', pron: 'du', noun: 'kind', time: 'heute', tense: 'praesens', neg: false }).de, 'Du siehst heute das Kind.')
+  eq('Akk den', buildSentence({ verb: 'sehen', pron: 'er', noun: 'freund', time: 'heute', tense: 'praesens', neg: false }).de, 'Er sieht heute den Freund.')
+  eq('sein Präs', buildSentence({ verb: 'sein', noun: 'kaffee', adj: 'gut', tense: 'praesens', neg: false }).de, 'Der Kaffee ist gut.')
+  eq('sein Prät', buildSentence({ verb: 'sein', noun: 'kaffee', adj: 'gut', tense: 'vergangen', neg: false }).de, 'Der Kaffee war gut.')
+  eq('sein Futur', buildSentence({ verb: 'sein', noun: 'kaffee', adj: 'gut', tense: 'zukunft', neg: false }).de, 'Der Kaffee wird gut sein.')
+  eq('sein neg', buildSentence({ verb: 'sein', noun: 'tag', adj: 'schoen', tense: 'praesens', neg: true }).de, 'Der Tag ist nicht schön.')
+  eq('haben Präs', buildSentence({ verb: 'haben', pron: 'wir', noun: 'zeit', tense: 'praesens', neg: false }).de, 'Wir haben Zeit.')
+  eq('haben kein', buildSentence({ verb: 'haben', pron: 'wir', noun: 'zeit', tense: 'praesens', neg: true }).de, 'Wir haben keine Zeit.')
+  eq('haben Prät', buildSentence({ verb: 'haben', pron: 'wir', noun: 'zeit', tense: 'vergangen', neg: false }).de, 'Wir hatten Zeit.')
+  eq('haben Futur', buildSentence({ verb: 'haben', pron: 'wir', noun: 'zeit', tense: 'zukunft', neg: false }).de, 'Wir werden Zeit haben.')
+  eq('brauchen', buildSentence({ verb: 'brauchen', pron: 'ich', noun: 'zeit', tense: 'praesens', neg: false }).de, 'Ich brauche Zeit.')
+  eq('brauchen kein', buildSentence({ verb: 'brauchen', pron: 'ich', noun: 'zeit', tense: 'praesens', neg: true }).de, 'Ich brauche keine Zeit.')
+  eq('brauchen Futur', buildSentence({ verb: 'brauchen', pron: 'ich', noun: 'zeit', tense: 'zukunft', neg: false }).de, 'Ich werde Zeit brauchen.')
+  eq('gehen Präs', buildSentence({ verb: 'gehen', pron: 'er', time: 'heute', tense: 'praesens', neg: false }).de, 'Er geht heute.')
+  eq('gehen Perfekt sein', buildSentence({ verb: 'gehen', pron: 'er', time: 'gestern', tense: 'vergangen', neg: false }).de, 'Er ist gestern gegangen.')
+  eq('kommen Futur', buildSentence({ verb: 'kommen', pron: 'sie3', time: 'morgen', tense: 'zukunft', neg: false }).de, 'Sie wird morgen kommen.')
+  eq('ihr trinkt', buildSentence({ verb: 'trinken', pron: 'ihr', noun: 'kaffee', time: 'heute', tense: 'praesens', neg: false }).de, 'Ihr trinkt heute Kaffee.')
+
+  eq('trinken kein Akk', buildSentence({ verb: 'trinken', pron: 'ihr', noun: 'kaffee', time: 'heute', tense: 'praesens', neg: true }).de, 'Ihr trinkt heute keinen Kaffee.')
+  eq('machen kein Akk', buildSentence({ verb: 'machen', pron: 'wir', noun: 'kaffee', time: 'heute', tense: 'praesens', neg: true }).de, 'Wir machen heute keinen Kaffee.')
+  eq('trinken Perfekt kein', buildSentence({ verb: 'trinken', pron: 'ich', noun: 'kaffee', time: 'gestern', tense: 'vergangen', neg: true }).de, 'Ich habe gestern keinen Kaffee getrunken.')
+  eq('trinken Futur kein', buildSentence({ verb: 'trinken', pron: 'ich', noun: 'kaffee', time: 'morgen', tense: 'zukunft', neg: true }).de, 'Ich werde morgen keinen Kaffee trinken.')
+
+  // флексії перекладу
+  eq('ukPast пішов(f)', ukPastForm('пішов', 'f'), 'пішла')
+  eq('ukPast прочитав(p)', ukPastForm('прочитав', 'p'), 'прочитали')
+  eq('ruPast пошёл(f)', ruPastForm('пошёл', 'f'), 'пошла')
+  eq('ruPast читал(n)', ruPastForm('читал', 'n'), 'читало')
+
+  // 10c. Повна матриця: кожне дієслово × час × тон у валідних комбінаціях
+  let built = 0
+  const tenses = ['praesens', 'vergangen', 'zukunft'] as const
+  for (const v of VERBS_C) {
+    for (const tense of tenses) {
+      for (const neg of [false, true]) {
+        try {
+          if (v.kind === 'sein') {
+            for (const n of NOUNS_C) for (const a of ADJS_C) {
+              const b = buildSentence({ verb: v.id, noun: n.id, adj: a.id, tense, neg })
+              if (!b.de.endsWith('.') || !b.uk.trim() || !b.ru.trim()) fail(`sein ${n.id}/${a.id}/${tense}: неповне речення`)
+              built++
+            }
+          } else if (v.kind === 'move') {
+            for (const p of PRONOUNS_C) for (const t of TIMES_C.filter((x) => x.tenses.includes(tense))) {
+              const b = buildSentence({ verb: v.id, pron: p.id, time: t.id, tense, neg })
+              if (!b.de.endsWith('.') || !b.uk.trim()) fail(`move ${p.id}/${v.id}/${tense}: неповне речення`)
+              built++
+            }
+          } else {
+            for (const p of PRONOUNS_C) for (const nid of allowedNouns(v)) {
+              const b = buildSentence({ verb: v.id, pron: p.id, noun: nid, time: 'heute', tense, neg })
+              if (!b.de.endsWith('.') || !b.uk.trim() || !b.ru.trim()) fail(`${v.kind} ${p.id}/${nid}/${tense}: неповне речення`)
+              // слова речення = токени для вправи
+              if (b.tokens.join(' ') !== b.de.slice(0, -1)) fail(`${v.id}: токени не збігаються: ${b.de}`)
+              built++
+            }
+          }
+        } catch (e) {
+          fail(`${v.id}/${tense}/${neg ? 'neg' : 'pos'}: впав двигун — ${e}`)
+        }
+      }
+    }
+  }
+  console.log(`Зібрано речень у матриці: ${built}`)
+
+  // 10d. Випадкові речення завжди коректні
+  for (let i = 0; i < 30; i++) {
+    const b = randomBuilt()
+    if (!b.de.endsWith('.') || !b.uk.trim() || !b.ru.trim() || !b.tokens.length) fail(`randomBuilt: неповне: ${b.de}`)
+  }
+
+  // 10e. Слоти UI
+  for (const v of VERBS_C) {
+    const s = slotFor(v)
+    if (v.kind === 'sein' && s !== 'adj') fail(`sein: slot ${s}`)
+    if (v.kind === 'move' && s !== 'none') fail(`move: slot ${s}`)
+  }
+  console.log(`Групи: займенників ${PRONOUNS_C.length}, дієслів ${VERBS_C.length}, іменників ${NOUNS_C.length}, прикметників ${ADJS_C.length}, обставин ${TIMES_C.length}`)
+}
+
+// 11. Гейміфікація: ранги, серії днів, досягнення, XP-економіка
 console.log('\n=== Гейміфікація ===')
 
-// 9a. Ранги: зростають, без дублікатів, старт із 0
+// 11a. Ранги: зростають, без дублікатів, старт із 0
 let prevMin = -1
 const rankDe = new Set<string>()
 for (const r of RANKS) {
@@ -190,7 +339,7 @@ if (nextRank(RANKS[RANKS.length - 1].min) !== undefined) fail('nextRank(max) м�
 if (nextRank(0)?.de !== RANKS[1].de) fail('nextRank(0) ≠ другий ранг')
 console.log(`Ранги: ${RANKS.map((r) => `${r.de}@${r.min}`).join(' → ')}`)
 
-// 9b. Серія днів: сьогодні/вчора/розриви/7 днів
+// 11b. Серія днів: сьогодні/вчора/розриви/7 днів
 const T = todayStr()
 const dayOffset = (n: number): string => {
   const d = new Date(T + 'T12:00:00')
@@ -204,7 +353,7 @@ if (dailyStreakFrom([T, dayOffset(-2)], T) !== 1) fail('розрив у днях
 const week = Array.from({ length: 7 }, (_, i) => dayOffset(i - 6))
 if (dailyStreakFrom(week, T) !== 7) fail('серія 7 днів підряд рахується неправильно')
 
-// 9c. Освоєність тем: порожня карта → 0, повна карта теми → зараховано
+// 11c. Освоєність тем: порожня карта → 0, повна карта теми → зараховано
 const masteryEmpty = topicMastery({})
 for (const lv of ['A1', 'A2', 'B1'] as Level[])
   if (masteryEmpty[lv].done !== 0) fail(`порожній прогрес не має давати освоєних тем (${lv})`)
@@ -214,7 +363,7 @@ for (const w of firstTopic.words) fullMap[wordKey(firstTopic.id, w)] = { l: 1 }
 const masteryOne = topicMastery(fullMap)
 if (masteryOne[firstTopic.level].done < 1) fail(`повністю вивчена тема не зарахована (${firstTopic.id})`)
 
-// 9d. Досягнення: унікальні id, умови спрацьовують на порозі
+// 11d. Досягнення: унікальні id, умови спрацьовують на порозі
 const aIds = new Set<string>()
 for (const a of ACHIEVEMENTS) {
   if (aIds.has(a.id)) fail(`дублікат досягнення: ${a.id}`)
@@ -244,14 +393,14 @@ for (const [id, patch] of thresholds) {
 }
 console.log(`Досягнень: ${ACHIEVEMENTS.length}, рангів: ${RANKS.length}, TOPIC_DONE=${Math.round(TOPIC_DONE * 100)}%`)
 
-// 9e. XP-економіка: максимум з реальних джерел має покривати найвищий ранг
+// 11e. XP-економіка: максимум з реальних джерел має покривати найвищий ранг
 const chaptersTotal = BOOKS.reduce((n, b) => n + b.chapters.length, 0)
 const maxReal = TOTAL_WORDS * XP.learnWord + chaptersTotal * XP.chapter + BOOKS.length * XP.bookDone
 const topRank = RANKS[RANKS.length - 1].min
 if (maxReal < topRank) fail(`максимальний ранг ${topRank} XP недосяжний без вправ (максимум із слів/книжок ${maxReal})`)
 console.log(`XP: слів ${TOTAL_WORDS}×${XP.learnWord} + розділів ${chaptersTotal}×${XP.chapter} + книжок ${BOOKS.length}×${XP.bookDone} = ${maxReal} (топ-ранг ${topRank})`)
 
-// 9f. buildSnap на порожньому стані не падає (поза браузером)
+// 11f. buildSnap на порожньому стані не падає (поза браузером)
 const emptySnap = buildSnap({
   xp: 0, ansC: 0, ansW: 0, bestStreak: 0, curStreak: 0, days: [],
   kinds: { quiz: 0, article: 0, plural: 0, verb: 0 }, chapters: [], learnedSeen: [], unlocked: {},
