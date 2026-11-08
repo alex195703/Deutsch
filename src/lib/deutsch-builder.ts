@@ -1,8 +1,8 @@
 // ============================================================
 // ДАНІ + ДВИГУН «МОВНОГО КОНСТРУКТОРА».
-// Основові словникові групи — по 10 найчастотніших слів:
-//   займенники, дієслова, іменники, прикметники (+ обставини
-//   часу). З них двигун збирає граматично правильні речення
+// Словникові групи — найчастотніші слова:
+//   займенники (10), дієслова (16), іменники (18),
+//   прикметники (16), обставини часу (11). З них двигун збирає граматично правильні речення
 //   у трьох часах (Präsens, минуле, Futur I) у ствердженні
 //   або запереченні й одразу дає переклад + пояснення граматики.
 //
@@ -126,6 +126,30 @@ export const NOUNS_C: CNoun[] = [
   { id: 'kaffee', art: 'der', de: 'Kaffee', deNp: 'der Kaffee', akk: 'den Kaffee', kein: 'kein Kaffee', habNp: 'Kaffee',
     uk: 'кава', ru: 'кофе', ukAkk: 'каву', ruAkk: 'кофе', ukGen: 'кави', ruGen: 'кофе',
     ukBe: 'була кава', ruBe: 'был кофе', g: 'f', ukNeed: 'потрібна кава', ruNeed: 'нужен кофе' },
+  { id: 'wasser', art: 'das', de: 'Wasser', deNp: 'das Wasser', akk: 'das Wasser', kein: 'kein Wasser', habNp: 'Wasser',
+    uk: 'вода', ru: 'вода', ukAkk: 'воду', ruAkk: 'воду', ukGen: 'води', ruGen: 'воды',
+    ukBe: 'була вода', ruBe: 'была вода', g: 'f', ukNeed: 'потрібна вода', ruNeed: 'нужна вода' },
+  { id: 'brot', art: 'das', de: 'Brot', deNp: 'das Brot', akk: 'das Brot', kein: 'kein Brot', habNp: 'Brot',
+    uk: 'хліб', ru: 'хлеб', ukAkk: 'хліб', ruAkk: 'хлеб', ukGen: 'хліба', ruGen: 'хлеба',
+    ukBe: 'був хліб', ruBe: 'был хлеб', g: 'm', ukNeed: 'потрібен хліб', ruNeed: 'нужен хлеб' },
+  { id: 'auto', art: 'das', de: 'Auto', deNp: 'das Auto', akk: 'das Auto', kein: 'kein Auto', habNp: 'ein Auto',
+    uk: 'автомобіль', ru: 'автомобиль', ukAkk: 'автомобіль', ruAkk: 'автомобиль', ukGen: 'автомобіля', ruGen: 'автомобиля',
+    ukBe: 'був автомобіль', ruBe: 'был автомобиль', g: 'm', ukNeed: 'потрібен автомобіль', ruNeed: 'нужен автомобиль' },
+  { id: 'wohnung', art: 'die', de: 'Wohnung', deNp: 'die Wohnung', akk: 'die Wohnung', kein: 'keine Wohnung', habNp: 'eine Wohnung',
+    uk: 'квартира', ru: 'квартира', ukAkk: 'квартиру', ruAkk: 'квартиру', ukGen: 'квартири', ruGen: 'квартиры',
+    ukBe: 'була квартира', ruBe: 'была квартира', g: 'f', ukNeed: 'потрібна квартира', ruNeed: 'нужна квартира' },
+  { id: 'schule', art: 'die', de: 'Schule', deNp: 'die Schule', akk: 'die Schule', kein: 'keine Schule', habNp: 'eine Schule',
+    uk: 'школа', ru: 'школа', ukAkk: 'школу', ruAkk: 'школу', ukGen: 'школи', ruGen: 'школы',
+    ukBe: 'була школа', ruBe: 'была школа', g: 'f', ukNeed: 'потрібна школа', ruNeed: 'нужна школа' },
+  { id: 'freundin', art: 'die', de: 'Freundin', deNp: 'die Freundin', akk: 'die Freundin', kein: 'keine Freundin', habNp: 'eine Freundin',
+    uk: 'подруга', ru: 'подруга', ukAkk: 'подругу', ruAkk: 'подругу', ukGen: 'подруги', ruGen: 'подруги',
+    ukBe: 'була подруга', ruBe: 'была подруга', g: 'f', ukNeed: 'потрібна подруга', ruNeed: 'нужна подруга' },
+  { id: 'hund', art: 'der', de: 'Hund', deNp: 'der Hund', akk: 'den Hund', kein: 'kein Hund', habNp: 'ein Hund',
+    uk: 'пес', ru: 'пёс', ukAkk: 'пса', ruAkk: 'пса', ukGen: 'пса', ruGen: 'пса',
+    ukBe: 'був пес', ruBe: 'был пёс', g: 'm', ukNeed: 'потрібен пес', ruNeed: 'нужен пёс' },
+  { id: 'katze', art: 'die', de: 'Katze', deNp: 'die Katze', akk: 'die Katze', kein: 'keine Katze', habNp: 'eine Katze',
+    uk: 'кішка', ru: 'кошка', ukAkk: 'кішку', ruAkk: 'кошку', ukGen: 'кішки', ruGen: 'кошки',
+    ukBe: 'була кішка', ruBe: 'была кошка', g: 'f', ukNeed: 'потрібна кішка', ruNeed: 'нужна кошка' },
 ]
 
 // ---------- ПРИКМЕТНИКИ (предикативно — після sein) ----------
@@ -148,6 +172,12 @@ export const ADJS_C: CAdj[] = [
   { id: 'einfach', de: 'einfach', uk: { m: 'простий', f: 'проста', n: 'просте', p: 'прості' }, ru: { m: 'простой', f: 'простая', n: 'простое', p: 'простые' } },
   { id: 'wichtig', de: 'wichtig', uk: { m: 'важливий', f: 'важлива', n: 'важливе', p: 'важливі' }, ru: { m: 'важный', f: 'важная', n: 'важное', p: 'важные' } },
   { id: 'richtig', de: 'richtig', uk: { m: 'правильний', f: 'правильна', n: 'правильне', p: 'правильні' }, ru: { m: 'правильный', f: 'правильная', n: 'правильное', p: 'правильные' } },
+  { id: 'billig', de: 'billig', uk: { m: 'дешевий', f: 'дешева', n: 'дешеве', p: 'дешеві' }, ru: { m: 'дешёвый', f: 'дешёвая', n: 'дешёвое', p: 'дешёвые' } },
+  { id: 'teuer', de: 'teuer', uk: { m: 'дорогий', f: 'дорога', n: 'дороге', p: 'дорогі' }, ru: { m: 'дорогой', f: 'дорогая', n: 'дорогое', p: 'дорогие' } },
+  { id: 'langsam', de: 'langsam', uk: { m: 'повільний', f: 'повільна', n: 'повільне', p: 'повільні' }, ru: { m: 'медленный', f: 'медленная', n: 'медленное', p: 'медленные' } },
+  { id: 'ruhig', de: 'ruhig', uk: { m: 'спокійний', f: 'спокійна', n: 'спокійне', p: 'спокійні' }, ru: { m: 'спокойный', f: 'спокойная', n: 'спокойное', p: 'спокойные' } },
+  { id: 'sauber', de: 'sauber', uk: { m: 'чистий', f: 'чиста', n: 'чисте', p: 'чисті' }, ru: { m: 'чистый', f: 'чистая', n: 'чистое', p: 'чистые' } },
+  { id: 'schwer', de: 'schwer', uk: { m: 'важкий', f: 'важка', n: 'важке', p: 'важкі' }, ru: { m: 'трудный', f: 'трудная', n: 'трудное', p: 'трудные' } },
 ]
 
 // ---------- ДІЄСЛОВА ----------
@@ -208,7 +238,10 @@ export const VERBS_C: CVerb[] = [
     obj: [
       { id: 'haus', np: 'das Haus' }, { id: 'buch', np: 'das Buch' },
       { id: 'kind', np: 'das Kind' }, { id: 'freund', np: 'den Freund' },
-      { id: 'stadt', np: 'die Stadt' },
+      { id: 'stadt', np: 'die Stadt' }, { id: 'auto', np: 'das Auto' },
+      { id: 'wohnung', np: 'die Wohnung' }, { id: 'schule', np: 'die Schule' },
+      { id: 'freundin', np: 'die Freundin' }, { id: 'hund', np: 'den Hund' },
+      { id: 'katze', np: 'die Katze' },
     ],
     ruInf: 'видеть',
     uk6: ['бачу', 'бачиш', 'бачить', 'бачимо', 'бачите', 'бачать'],
@@ -231,7 +264,7 @@ export const VERBS_C: CVerb[] = [
     id: 'trinken', inf: 'trinken', uk: 'пити', ru: 'пить', kind: 'trans',
     forms: ['trinke', 'trinkst', 'trinkt', 'trinken', 'trinkt', 'trinken'],
     part: 'getrunken', aux: 'haben',
-    obj: [{ id: 'kaffee', np: 'Kaffee' }],
+    obj: [{ id: 'kaffee', np: 'Kaffee' }, { id: 'wasser', np: 'Wasser' }],
     ruInf: 'пить',
     uk6: ['пʼю', 'пʼєш', 'пʼє', 'пʼємо', 'пʼєте', 'пʼють'],
     ru6: ['пью', 'пьёшь', 'пьёт', 'пьём', 'пьёте', 'пьют'],
@@ -242,7 +275,11 @@ export const VERBS_C: CVerb[] = [
     id: 'kaufen', inf: 'kaufen', uk: 'купувати', ru: 'покупать', kind: 'trans',
     forms: ['kaufe', 'kaufst', 'kauft', 'kaufen', 'kauft', 'kaufen'],
     part: 'gekauft', aux: 'haben',
-    obj: [{ id: 'buch', np: 'das Buch' }, { id: 'kaffee', np: 'Kaffee' }],
+    obj: [
+      { id: 'buch', np: 'das Buch' }, { id: 'kaffee', np: 'Kaffee' },
+      { id: 'brot', np: 'Brot' }, { id: 'wasser', np: 'Wasser' },
+      { id: 'hund', np: 'einen Hund' }, { id: 'katze', np: 'eine Katze' },
+    ],
     ruInf: 'покупать',
     uk6: ['купую', 'купуєш', 'купує', 'купуємо', 'купуєте', 'купують'],
     ru6: ['покупаю', 'покупаешь', 'покупает', 'покупаем', 'покупаете', 'покупают'],
@@ -253,7 +290,10 @@ export const VERBS_C: CVerb[] = [
     id: 'brauchen', inf: 'brauchen', uk: 'потребувати', ru: 'нуждаться', kind: 'need',
     forms: ['brauche', 'brauchst', 'braucht', 'brauchen', 'braucht', 'brauchen'],
     part: 'gebraucht', aux: 'haben',
-    obj: [{ id: 'zeit', np: 'Zeit' }, { id: 'geld', np: 'Geld' }, { id: 'buch', np: 'das Buch' }],
+    obj: [
+      { id: 'zeit', np: 'Zeit' }, { id: 'geld', np: 'Geld' }, { id: 'buch', np: 'das Buch' },
+      { id: 'arbeit', np: 'Arbeit' }, { id: 'wohnung', np: 'eine Wohnung' }, { id: 'auto', np: 'ein Auto' },
+    ],
   },
   {
     id: 'gehen', inf: 'gehen', uk: 'іти', ru: 'идти', kind: 'move',
@@ -276,6 +316,83 @@ export const VERBS_C: CVerb[] = [
     ukPastM: 'прийшов', ruPastM: 'пришёл',
     ukFut6: ['прийду', 'прийдеш', 'прийде', 'прийдемо', 'прийдете', 'прийдуть'],
     ruFut6: ['приду', 'придёшь', 'придёт', 'придём', 'придёте', 'придут'],
+  },
+  {
+    id: 'essen', inf: 'essen', uk: 'їсти', ru: 'есть', kind: 'trans',
+    forms: ['esse', 'isst', 'isst', 'essen', 'esst', 'essen'],
+    part: 'gegessen', aux: 'haben',
+    obj: [{ id: 'brot', np: 'Brot' }],
+    ruInf: 'есть',
+    uk6: ['їм', 'їси', 'їсть', 'їмо', 'їсте', 'їдять'],
+    ru6: ['ем', 'ешь', 'ест', 'едим', 'едите', 'едят'],
+    ukPastM: 'з’їв', ruPastM: 'съел',
+    ukFut6: ['з’їм', 'з’їси', 'з’їсть', 'з’їмо', 'з’їсте', 'з’їдять'],
+    ruFut6: ['съем', 'съешь', 'съест', 'съедим', 'съедите', 'съедят'],
+  },
+  {
+    id: 'kochen', inf: 'kochen', uk: 'варити', ru: 'варить', kind: 'trans',
+    forms: ['koche', 'kochst', 'kocht', 'kochen', 'kocht', 'kochen'],
+    part: 'gekocht', aux: 'haben',
+    obj: [{ id: 'kaffee', np: 'Kaffee' }, { id: 'wasser', np: 'Wasser' }],
+    ruInf: 'варить',
+    uk6: ['варю', 'вариш', 'варить', 'варимо', 'варите', 'варять'],
+    ru6: ['варю', 'варишь', 'варит', 'варим', 'варите', 'варят'],
+    ukPastM: 'зварив', ruPastM: 'сварил',
+    ukFut6: ['зварю', 'звариш', 'зварить', 'зваримо', 'зварите', 'зварять'],
+    ruFut6: ['сварю', 'сваришь', 'сварит', 'сварим', 'сварите', 'сварят'],
+  },
+  {
+    id: 'suchen', inf: 'suchen', uk: 'шукати', ru: 'искать', kind: 'trans',
+    forms: ['suche', 'suchst', 'sucht', 'suchen', 'sucht', 'suchen'],
+    part: 'gesucht', aux: 'haben',
+    obj: [
+      { id: 'arbeit', np: 'Arbeit' }, { id: 'freund', np: 'einen Freund' },
+      { id: 'freundin', np: 'eine Freundin' }, { id: 'hund', np: 'einen Hund' },
+      { id: 'katze', np: 'eine Katze' },
+    ],
+    ruInf: 'искать',
+    uk6: ['шукаю', 'шукаєш', 'шукає', 'шукаємо', 'шукаєте', 'шукають'],
+    ru6: ['ищу', 'ищешь', 'ищет', 'ищем', 'ищете', 'ищут'],
+    ukPastM: 'шукав', ruPastM: 'искал',
+    ukFut6: ['шукатиму', 'шукатимеш', 'шукатиме', 'шукатимемо', 'шукатимете', 'шукатимуть'],
+  },
+  {
+    id: 'finden', inf: 'finden', uk: 'знаходити', ru: 'находить', kind: 'trans',
+    forms: ['finde', 'findest', 'findet', 'finden', 'findet', 'finden'],
+    part: 'gefunden', aux: 'haben',
+    obj: [
+      { id: 'buch', np: 'das Buch' }, { id: 'haus', np: 'das Haus' },
+      { id: 'freund', np: 'den Freund' }, { id: 'freundin', np: 'die Freundin' },
+      { id: 'hund', np: 'den Hund' }, { id: 'katze', np: 'die Katze' },
+    ],
+    ruInf: 'находить',
+    uk6: ['знаходжу', 'знаходиш', 'знаходить', 'знаходимо', 'знаходите', 'знаходять'],
+    ru6: ['нахожу', 'находишь', 'находит', 'находим', 'находите', 'находят'],
+    ukPastM: 'знайшов', ruPastM: 'нашёл',
+    ukFut6: ['знайду', 'знайдеш', 'знайде', 'знайдемо', 'знайдете', 'знайдуть'],
+    ruFut6: ['найду', 'найдёшь', 'найдёт', 'найдём', 'найдёте', 'найдут'],
+  },
+  {
+    id: 'schreiben', inf: 'schreiben', uk: 'писати', ru: 'писать', kind: 'trans',
+    forms: ['schreibe', 'schreibst', 'schreibt', 'schreiben', 'schreibt', 'schreiben'],
+    part: 'geschrieben', aux: 'haben',
+    obj: [{ id: 'buch', np: 'das Buch' }],
+    ruInf: 'писать',
+    uk6: ['пишу', 'пишеш', 'пише', 'пишемо', 'пишете', 'пишуть'],
+    ru6: ['пишу', 'пишешь', 'пишет', 'пишем', 'пишете', 'пишут'],
+    ukPastM: 'написав', ruPastM: 'написал',
+    ukFut6: ['напишу', 'напишеш', 'напише', 'напишемо', 'напишете', 'напишуть'],
+  },
+  {
+    id: 'fahren', inf: 'fahren', uk: 'їхати', ru: 'ехать', kind: 'move',
+    forms: ['fahre', 'fährst', 'fährt', 'fahren', 'fahrt', 'fahren'],
+    part: 'gefahren', aux: 'sein',
+    ruInf: 'ехать',
+    uk6: ['їду', 'їдеш', 'їде', 'їдемо', 'їдете', 'їдуть'],
+    ru6: ['еду', 'едешь', 'едет', 'едем', 'едете', 'едут'],
+    ukPastM: 'поїхав', ruPastM: 'поехал',
+    ukFut6: ['поїду', 'поїдеш', 'поїде', 'поїдемо', 'поїдете', 'поїдуть'],
+    ruFut6: ['поеду', 'поедешь', 'поедет', 'поедем', 'поедете', 'поедут'],
   },
 ]
 
@@ -300,6 +417,9 @@ export const TIMES_C: CTime[] = [
   { id: 'morgen', de: 'morgen', uk: 'завтра', ru: 'завтра', tenses: ['zukunft'], first: true },
   { id: 'spaeter', de: 'später', uk: 'пізніше', ru: 'позже', tenses: ['zukunft'], first: true },
   { id: 'bald', de: 'bald', uk: 'незабаром', ru: 'скоро', tenses: ['zukunft'], first: true },
+  { id: 'selten', de: 'selten', uk: 'рідко', ru: 'редко', tenses: ['praesens'], first: false },
+  { id: 'abends', de: 'abends', uk: 'вечорами', ru: 'вечерами', tenses: ['praesens'], first: false },
+  { id: 'fruher', de: 'früher', uk: 'раніше', ru: 'раньше', tenses: ['vergangen'], first: false },
 ]
 
 export const DEFAULT_TIME: Record<Tense, string> = {
@@ -550,6 +670,8 @@ function buildTrans(pId: string, vId: string, nId: string, tId: string, tense: T
 
 // --- P3b: brauchen — переклад «мені потрібен …» ---
 
+const NEED_PRET = ['brauchte', 'brauchtest', 'brauchte', 'brauchten', 'brauchtet', 'brauchten']
+
 function buildNeed(pId: string, vId: string, nId: string, tense: Tense, neg: boolean): Built {
   const p = pron(pId)
   const v = verb(vId)
@@ -566,11 +688,11 @@ function buildNeed(pId: string, vId: string, nId: string, tense: Tense, neg: boo
   let uk: string
   let ru: string
   if (tense === 'praesens') {
-    de = `${cap(p.deS)} brauche ${neg ? `${keinAkk} ` : ''}${np}.`
+    de = `${cap(p.deS)} ${v.forms[p.idx]} ${neg ? `${keinAkk} ${n.de}` : np}.`
     uk = `${cap(p.ukNeed)} ${neg ? 'не ' : ''}${n.ukNeed}.`
     ru = `${cap(p.ruNeed)} ${neg ? 'не ' : ''}${n.ruNeed}.`
   } else if (tense === 'vergangen') {
-    de = `${cap(p.deS)} brauchte ${neg ? `${keinAkk} ` : ''}${np}.`
+    de = `${cap(p.deS)} ${NEED_PRET[p.idx]} ${neg ? `${keinAkk} ${n.de}` : np}.`
     uk = `${cap(p.ukNeed)} ${neg ? 'не ' : ''}${beUk} ${n.ukNeed}.`
     ru = `${cap(p.ruNeed)} ${neg ? 'не ' : ''}${beRu} ${n.ruNeed}.`
   } else {
