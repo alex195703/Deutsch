@@ -227,8 +227,8 @@ console.log('\n=== Конструктор ===')
       if (!a.uk[g].trim() || !a.ru[g].trim()) fail(`неповний прикметник: ${a.de}/${g}`)
     }
   }
-  if (PRONOUNS_C.length !== 10 || NOUNS_C.length !== 10 || ADJS_C.length !== 10 || VERBS_C.length !== 10)
-    fail(`групи мають бути по 10: ${PRONOUNS_C.length}/${NOUNS_C.length}/${ADJS_C.length}/${VERBS_C.length}`)
+  if (PRONOUNS_C.length < 10 || NOUNS_C.length < 10 || ADJS_C.length < 10 || VERBS_C.length < 10 || TIMES_C.length < 10)
+    fail(`групи мають бути не менші ніж 10: ${PRONOUNS_C.length}/${VERBS_C.length}/${NOUNS_C.length}/${ADJS_C.length}/${TIMES_C.length}`)
 
   // 10b. Точкові перевірки граматики
   const eq = (label: string, got: string, want: string) => {
@@ -261,6 +261,22 @@ console.log('\n=== Конструктор ===')
   eq('machen kein Akk', buildSentence({ verb: 'machen', pron: 'wir', noun: 'kaffee', time: 'heute', tense: 'praesens', neg: true }).de, 'Wir machen heute keinen Kaffee.')
   eq('trinken Perfekt kein', buildSentence({ verb: 'trinken', pron: 'ich', noun: 'kaffee', time: 'gestern', tense: 'vergangen', neg: true }).de, 'Ich habe gestern keinen Kaffee getrunken.')
   eq('trinken Futur kein', buildSentence({ verb: 'trinken', pron: 'ich', noun: 'kaffee', time: 'morgen', tense: 'zukunft', neg: true }).de, 'Ich werde morgen keinen Kaffee trinken.')
+
+  // розширення словника (2026-11)
+  eq('essen', buildSentence({ verb: 'essen', pron: 'ich', noun: 'brot', time: 'heute', tense: 'praesens', neg: false }).de, 'Ich esse heute Brot.')
+  eq('essen kein', buildSentence({ verb: 'essen', pron: 'ich', noun: 'brot', time: 'heute', tense: 'praesens', neg: true }).de, 'Ich esse heute kein Brot.')
+  eq('essen Perfekt', buildSentence({ verb: 'essen', pron: 'sie3', noun: 'brot', time: 'gestern', tense: 'vergangen', neg: false }).de, 'Sie hat gestern Brot gegessen.')
+  eq('fahren Perfekt sein', buildSentence({ verb: 'fahren', pron: 'er', time: 'gestern', tense: 'vergangen', neg: false }).de, 'Er ist gestern gefahren.')
+  eq('fahren Futur', buildSentence({ verb: 'fahren', pron: 'wir', time: 'morgen', tense: 'zukunft', neg: false }).de, 'Wir werden morgen fahren.')
+  eq('suchen kein', buildSentence({ verb: 'suchen', pron: 'wir', noun: 'arbeit', time: 'heute', tense: 'praesens', neg: true }).de, 'Wir suchen heute keine Arbeit.')
+  eq('finden nicht', buildSentence({ verb: 'finden', pron: 'ich', noun: 'hund', time: 'heute', tense: 'praesens', neg: true }).de, 'Ich finde heute den Hund nicht.')
+  eq('schreiben Perfekt', buildSentence({ verb: 'schreiben', pron: 'ihr', noun: 'buch', time: 'gestern', tense: 'vergangen', neg: false }).de, 'Ihr habt gestern das Buch geschrieben.')
+  eq('haben kein Auto', buildSentence({ verb: 'haben', pron: 'wir', noun: 'auto', tense: 'praesens', neg: true }).de, 'Wir haben kein Auto.')
+  eq('haben Wohnung Perf', buildSentence({ verb: 'haben', pron: 'sie3', noun: 'wohnung', tense: 'vergangen', neg: false }).de, 'Sie hatte eine Wohnung.')
+  eq('sein billig', buildSentence({ verb: 'sein', noun: 'auto', adj: 'billig', tense: 'praesens', neg: false }).de, 'Das Auto ist billig.')
+  eq('sein schwer Futur', buildSentence({ verb: 'sein', noun: 'schule', adj: 'schwer', tense: 'zukunft', neg: false }).de, 'Die Schule wird schwer sein.')
+  eq('brauchen kein Buch', buildSentence({ verb: 'brauchen', pron: 'ich', noun: 'buch', tense: 'praesens', neg: true }).de, 'Ich brauche kein Buch.')
+  eq('brauchen Wohnung', buildSentence({ verb: 'brauchen', pron: 'du', noun: 'wohnung', tense: 'praesens', neg: false }).de, 'Du brauchst eine Wohnung.')
 
   // флексії перекладу
   eq('ukPast пішов(f)', ukPastForm('пішов', 'f'), 'пішла')
