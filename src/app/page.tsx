@@ -37,7 +37,7 @@ type Tab = 'words' | 'cards' | 'quiz' | 'articles' | 'verbs' | 'modal' | 'phrase
 
 export default function DeutschTrainer() {
   const L = useL()
-  useTitle('Німецька A1 — тренажер слів і граматики', 'Немецкий A1 — тренажёр слов и грамматики')
+  useTitle('Німецька A1 — тренажер професора Орлова О.В.', 'Немецкий A1 — тренажёр профессора Орлова А.В.')
   const { map, record, setLearned, resetAll, learnedCount } = useProgress()
   const { rank, s: g } = useGamify()
   const [tab, setTab] = useState<Tab>('words')
@@ -137,6 +137,9 @@ export default function DeutschTrainer() {
           >
             ← {L('Ігротека', 'Игротека')}
           </a>
+        </p>
+        <p className="mt-1 px-4 text-center text-xs font-semibold text-zinc-600">
+          🎓 {L('Автор і розробник — професор Орлов О.В.', 'Автор и разработчик — профессор Орлов А.В.')}
         </p>
       </footer>
     </div>
