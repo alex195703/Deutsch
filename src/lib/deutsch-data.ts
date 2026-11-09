@@ -2,8 +2,10 @@
 // ДАНІ ТРЕНАЖЕРА НІМЕЦЬКОЇ — A1 + A2 + B1 + фрази (Redemittel).
 // Слова беруться з файлів: deutsch-data.ts (A1, тут),
 // deutsch-a2-1/2.ts, deutsch-b1-1/2.ts, deutsch-phrases.ts.
+// Приклади-речення з файлів deutsch-ex-*.ts підтягуються в
+// withExamples() — кожне слово має типове речення ситуації.
 // Кожне слово: de — німецькою; art/pl — артикль і множина
-// для іменників; uk/ru — переклад; ex — приклад речення (опційно).
+// для іменників; uk/ru — переклад; ex — приклад речення.
 // Українська — перша мова, російська — друга (шар i18n.tsx).
 // ============================================================
 
@@ -12,6 +14,7 @@ import { TOPICS_A2_2 } from './deutsch-a2-2'
 import { TOPICS_B1_1 } from './deutsch-b1-1'
 import { TOPICS_B1_2 } from './deutsch-b1-2'
 import { TOPICS_PHR } from './deutsch-phrases'
+import { EXAMPLES } from './deutsch-examples'
 
 export type Ex = { de: string; uk: string; ru: string }
 
@@ -293,15 +296,35 @@ const TOPICS_A1: Topic[] = [
   },
 ]
 
+/** Тема-фраза (Redemittel): слова = цілі фрази, ex їм не потрібен */
+export function isPhraseTopic(t: Topic): boolean {
+  return t.id.startsWith('ph-')
+}
+
+/**
+ * Підтягує приклади-речення з таблиць EXAMPLES у слова без власного ex.
+ * Ключі: topicId → de-слово (точно як у wordKey).
+ */
+function withExamples(topics: Topic[]): Topic[] {
+  return topics.map((t) => {
+    const table = EXAMPLES[t.id]
+    if (!table) return t
+    return {
+      ...t,
+      words: t.words.map((w) => (!w.ex && table[w.de] ? { ...w, ex: table[w.de] } : w)),
+    }
+  })
+}
+
 /** Усі теми трьох рівнів + фрази в одному списку (порядок = порядок рівнів) */
-export const TOPICS: Topic[] = [
+export const TOPICS: Topic[] = withExamples([
   ...TOPICS_A1,
   ...TOPICS_A2_1,
   ...TOPICS_A2_2,
   ...TOPICS_B1_1,
   ...TOPICS_B1_2,
   ...TOPICS_PHR,
-]
+])
 
 /** Рівні для фільтра (порядок = порядок у UI) */
 export const LEVELS = ['A1', 'A2', 'B1'] as const
