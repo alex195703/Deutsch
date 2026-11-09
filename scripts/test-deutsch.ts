@@ -12,6 +12,7 @@ import {
   ADJS_C, NOUNS_C, PRONOUNS_C, TIMES_C, VERBS_C,
   buildSentence, randomBuilt, ukPastForm, ruPastForm, allowedNouns, slotFor,
 } from '../src/lib/deutsch-builder'
+import { MODALS, MSENSES, exSentence } from '../src/lib/deutsch-modal'
 import {
   ACHIEVEMENTS, RANKS, XP, TOPIC_DONE,
   rankFor, nextRank, dailyStreakFrom, todayStr, topicMastery,
@@ -335,10 +336,78 @@ console.log('\n=== Конструктор ===')
   console.log(`Групи: займенників ${PRONOUNS_C.length}, дієслів ${VERBS_C.length}, іменників ${NOUNS_C.length}, прикметників ${ADJS_C.length}, обставин ${TIMES_C.length}`)
 }
 
-// 11. Гейміфікація: ранги, серії днів, досягнення, XP-економіка
+// 11. Модальні дієслова: форми, рамка, гігієна мов
+console.log('\n=== Модальні дієслова ===')
+{
+  const mids = new Set<string>()
+  let exCount = 0
+  for (const m of MODALS) {
+    if (mids.has(m.id)) fail(`дублікат модального: ${m.id}`)
+    mids.add(m.id)
+    if (m.pr.length !== 6 || m.pt.length !== 6) fail(`${m.inf}: форм має бути 6 у Präsens і Präteritum`)
+    for (const f of [...m.pr, ...m.pt]) if (!f.trim()) fail(`${m.inf}: порожня форма`)
+    // модальне правило: ich = er/sie/es без закінчення в обох часах
+    if (m.pr[0] !== m.pr[2]) fail(`${m.inf}: pr ich (${m.pr[0]}) ≠ er (${m.pr[2]})`)
+    if (m.pt[0] !== m.pt[2]) fail(`${m.inf}: pt ich (${m.pt[0]}) ≠ er (${m.pt[2]})`)
+    // wir-форма збігається з інфінітивом у Präsens; у Präteritum — ні
+    if (m.pr[3] !== m.inf) fail(`${m.inf}: wir-форма Präsens «${m.pr[3]}» ≠ інфінітиву`)
+    if (m.pt[3] === m.inf) fail(`${m.inf}: wir-форма Präteritum не має дорівнювати інфінітиву`)
+    if (!m.meaning.uk.trim() || !m.meaning.ru.trim()) fail(`${m.inf}: неповне значення`)
+    if (!m.force.uk.trim() || !m.force.ru.trim()) fail(`${m.inf}: неповний відтінок`)
+    if (ukBad.test(m.meaning.uk) || ukBad.test(m.force.uk)) fail(`рос. літери в uk полях «${m.inf}»`)
+    if (ruBad.test(m.meaning.ru) || ruBad.test(m.force.ru)) fail(`укр. літери в ru полях «${m.inf}»`)
+    if (m.trap) {
+      if (!m.trap.uk.trim() || !m.trap.ru.trim()) fail(`${m.inf}: неповна пастка`)
+      if (ukBad.test(m.trap.uk)) fail(`рос. літери в uk пастки «${m.inf}»`)
+      if (ruBad.test(m.trap.ru)) fail(`укр. літери в ru пастки «${m.inf}»`)
+    }
+    // приклади: рамка збирається, початок — з великої, кінець — розділовий знак,
+    // модальна форма належить до форм цього дієслова
+    if (!m.examples.length) fail(`${m.inf}: жодного приклада`)
+    for (const ex of m.examples) {
+      exCount++
+      const s = exSentence(ex)
+      if (!/^[A-ZÄÖÜ]/.test(s)) fail(`«${m.inf}»: речення не з великої літери: ${s}`)
+      if (!/[.?!]$/.test(s)) fail(`«${m.inf}»: немає розділового знака в кінці: ${s}`)
+      if (!m.pr.some((f) => f.toLowerCase() === ex.modal.toLowerCase()) && !m.pt.some((f) => f.toLowerCase() === ex.modal.toLowerCase()))
+        fail(`«${m.inf}»: форма «${ex.modal}» не належить до форм дієслова`)
+      if (!ex.uk.trim() || !ex.ru.trim()) fail(`«${m.inf}»: приклад без перекладу: ${s}`)
+      if (ukBad.test(ex.uk)) fail(`рос. літери в uk приклада «${s}»`)
+      if (ruBad.test(ex.ru)) fail(`укр. літери в ru приклада «${s}»`)
+      if (ex.note) {
+        if (!ex.note.uk.trim() || !ex.note.ru.trim()) fail(`«${m.inf}»: неповна нотатка приклада`)
+        if (ukBad.test(ex.note.uk)) fail(`рос. літери в uk нотатки «${s}»`)
+        if (ruBad.test(ex.note.ru)) fail(`укр. літери в ru нотатки «${s}»`)
+      }
+    }
+  }
+  // точкові перевірки ключових форм
+  const eq = (label: string, got: string, want: string) => {
+    if (got !== want) fail(`${label}: "${got}", а очікувалось "${want}"`)
+  }
+  eq('können pr ich', MODALS[0].pr[0], 'kann')
+  eq('können pt er', MODALS[0].pt[2], 'konnte')
+  eq('müssen pr du', MODALS[1].pr[1], 'musst')
+  eq('wollen pt ich', MODALS[3].pt[0], 'wollte')
+  eq('möchten pr ich', MODALS[5].pr[0], 'möchte')
+  eq('рамка können', exSentence(MODALS[0].examples[0]), 'Ich kann gut schwimmen.')
+  eq('рамка müssen', exSentence(MODALS[1].examples[0]), 'Ich muss heute arbeiten.')
+  eq('рамка dürfen-питання', exSentence(MODALS[2].examples[1]), 'Darf ich fragen?')
+  // підказки-сенси: валідні посилання й гігієна
+  const idsM = new Set(MODALS.map((m) => m.id))
+  for (const s of MSENSES) {
+    if (!idsM.has(s.verb)) fail(`сенс «${s.uk}» посилається на невідоме дієслово ${s.verb}`)
+    if (!s.uk.trim() || !s.ru.trim()) fail(`порожній сенс: ${s.verb}`)
+    if (ukBad.test(s.uk)) fail(`рос. літери в uk сенсу «${s.uk}»`)
+    if (ruBad.test(s.ru)) fail(`укр. літери в ru сенсу «${s.ru}»`)
+  }
+  console.log(`Дієслів: ${MODALS.length}, прикладів: ${exCount}, підказок-сенсів: ${MSENSES.length}`)
+}
+
+// 12. Гейміфікація: ранги, серії днів, досягнення, XP-економіка
 console.log('\n=== Гейміфікація ===')
 
-// 11a. Ранги: зростають, без дублікатів, старт із 0
+// 12a. Ранги: зростають, без дублікатів, старт із 0
 let prevMin = -1
 const rankDe = new Set<string>()
 for (const r of RANKS) {
@@ -355,7 +424,7 @@ if (nextRank(RANKS[RANKS.length - 1].min) !== undefined) fail('nextRank(max) м�
 if (nextRank(0)?.de !== RANKS[1].de) fail('nextRank(0) ≠ другий ранг')
 console.log(`Ранги: ${RANKS.map((r) => `${r.de}@${r.min}`).join(' → ')}`)
 
-// 11b. Серія днів: сьогодні/вчора/розриви/7 днів
+// 12b. Серія днів: сьогодні/вчора/розриви/7 днів
 const T = todayStr()
 const dayOffset = (n: number): string => {
   const d = new Date(T + 'T12:00:00')
@@ -369,7 +438,7 @@ if (dailyStreakFrom([T, dayOffset(-2)], T) !== 1) fail('розрив у днях
 const week = Array.from({ length: 7 }, (_, i) => dayOffset(i - 6))
 if (dailyStreakFrom(week, T) !== 7) fail('серія 7 днів підряд рахується неправильно')
 
-// 11c. Освоєність тем: порожня карта → 0, повна карта теми → зараховано
+// 12c. Освоєність тем: порожня карта → 0, повна карта теми → зараховано
 const masteryEmpty = topicMastery({})
 for (const lv of ['A1', 'A2', 'B1'] as Level[])
   if (masteryEmpty[lv].done !== 0) fail(`порожній прогрес не має давати освоєних тем (${lv})`)
@@ -379,7 +448,7 @@ for (const w of firstTopic.words) fullMap[wordKey(firstTopic.id, w)] = { l: 1 }
 const masteryOne = topicMastery(fullMap)
 if (masteryOne[firstTopic.level].done < 1) fail(`повністю вивчена тема не зарахована (${firstTopic.id})`)
 
-// 11d. Досягнення: унікальні id, умови спрацьовують на порозі
+// 12d. Досягнення: унікальні id, умови спрацьовують на порозі
 const aIds = new Set<string>()
 for (const a of ACHIEVEMENTS) {
   if (aIds.has(a.id)) fail(`дублікат досягнення: ${a.id}`)
@@ -409,14 +478,14 @@ for (const [id, patch] of thresholds) {
 }
 console.log(`Досягнень: ${ACHIEVEMENTS.length}, рангів: ${RANKS.length}, TOPIC_DONE=${Math.round(TOPIC_DONE * 100)}%`)
 
-// 11e. XP-економіка: максимум з реальних джерел має покривати найвищий ранг
+// 12e. XP-економіка: максимум з реальних джерел має покривати найвищий ранг
 const chaptersTotal = BOOKS.reduce((n, b) => n + b.chapters.length, 0)
 const maxReal = TOTAL_WORDS * XP.learnWord + chaptersTotal * XP.chapter + BOOKS.length * XP.bookDone
 const topRank = RANKS[RANKS.length - 1].min
 if (maxReal < topRank) fail(`максимальний ранг ${topRank} XP недосяжний без вправ (максимум із слів/книжок ${maxReal})`)
 console.log(`XP: слів ${TOTAL_WORDS}×${XP.learnWord} + розділів ${chaptersTotal}×${XP.chapter} + книжок ${BOOKS.length}×${XP.bookDone} = ${maxReal} (топ-ранг ${topRank})`)
 
-// 11f. buildSnap на порожньому стані не падає (поза браузером)
+// 12f. buildSnap на порожньому стані не падає (поза браузером)
 const emptySnap = buildSnap({
   xp: 0, ansC: 0, ansW: 0, bestStreak: 0, curStreak: 0, days: [],
   kinds: { quiz: 0, article: 0, plural: 0, verb: 0 }, chapters: [], learnedSeen: [], unlocked: {},
