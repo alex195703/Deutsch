@@ -316,14 +316,23 @@ function withExamples(topics: Topic[]): Topic[] {
   })
 }
 
-/** Усі теми трьох рівнів + фрази в одному списку (порядок = порядок рівнів) */
+/**
+ * Усі теми трьох рівнів + фрази в одному списку.
+ * Дві теми обовʼязкових побутових фраз («Треба сказати…», «Обовʼязково
+ * відповісти…») ідуть ПЕРШИМИ — це найпотрібніше для реальних ситуацій,
+ * їх має бути видно одразу, без гортання списку тем.
+ */
+const PH_MUST_FIRST = TOPICS_PHR.filter((t) => t.id === 'ph-must' || t.id === 'ph-react')
+const PH_REST = TOPICS_PHR.filter((t) => t.id !== 'ph-must' && t.id !== 'ph-react')
+
 export const TOPICS: Topic[] = withExamples([
+  ...PH_MUST_FIRST,
   ...TOPICS_A1,
   ...TOPICS_A2_1,
   ...TOPICS_A2_2,
   ...TOPICS_B1_1,
   ...TOPICS_B1_2,
-  ...TOPICS_PHR,
+  ...PH_REST,
 ])
 
 /** Рівні для фільтра (порядок = порядок у UI) */
