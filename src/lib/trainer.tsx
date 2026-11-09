@@ -12,6 +12,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useLang, useL } from './i18n'
 import { ART_STYLE, type Word } from './deutsch-data'
+import { gAnswer, gLearnWord, gReset, type Kind } from './gamify'
 
 // ---------- ПРОГРЕС ----------
 
@@ -47,7 +48,8 @@ export function useProgress() {
     setReady(true)
   }, [])
 
-  const record = useCallback((key: string, ok: boolean) => {
+  const record = useCallback((key: string, ok: boolean, kind: Kind = 'quiz') => {
+    gAnswer(ok, kind) // XP/серії/досягнення — у gamify.ts
     setMap((prev) => {
       const s = prev[key] ?? { c: 0, w: 0 }
       const next: ProgressMap = { ...prev, [key]: { c: s.c + (ok ? 1 : 0), w: s.w + (ok ? 0 : 1), l: s.l } }
@@ -57,6 +59,7 @@ export function useProgress() {
   }, [])
 
   const setLearned = useCallback((key: string, learned: boolean) => {
+    if (learned) gLearnWord(key) // XP лише за перше «вивчено» (dedupe всередині)
     setMap((prev) => {
       const s = prev[key] ?? { c: 0, w: 0 }
       const next: ProgressMap = { ...prev, [key]: { c: s.c, w: s.w, l: learned ? 1 : undefined } }
@@ -66,6 +69,7 @@ export function useProgress() {
   }, [])
 
   const resetAll = useCallback(() => {
+    gReset() // скидає XP/досягнення (deutsch-gamify-v1)
     setMap({})
     try {
       localStorage.removeItem(STORAGE_KEY)

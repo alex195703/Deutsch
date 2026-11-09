@@ -415,6 +415,7 @@ export function useGamify(): {
   const s = useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
   const [, force] = useState(0)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage доступний лише на клієнті після монтування (SSR-гідратація)
     if (!hydrated) { hydrate(); force((n) => n + 1) }
   }, [])
   const snap = buildSnap(s)

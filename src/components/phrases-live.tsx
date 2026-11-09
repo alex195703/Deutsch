@@ -163,7 +163,6 @@ export function PhrasesTab({ map, setLearned }: {
     // seed змушує перемішати заново після «Ще раз»
     void seed
     return shuffle(all)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groups, seed])
 
   const doneCount = useMemo(() => {

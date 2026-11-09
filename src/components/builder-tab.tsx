@@ -102,7 +102,6 @@ function BuildMode() {
     } catch {
       return null
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pron, verb, noun, adj, time, tense, neg])
 
   const randomize = () => {
