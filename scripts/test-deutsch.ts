@@ -14,6 +14,8 @@ import {
   buildSentence, randomBuilt, ukPastForm, ruPastForm, allowedNouns, slotFor,
 } from '../src/lib/deutsch-builder'
 import { MODALS, MSENSES, exSentence } from '../src/lib/deutsch-modal'
+import { PRON_TABLES, PRON_TOTAL } from '../src/lib/deutsch-pronouns'
+import { PREP_GROUPS, PREP_TOTAL } from '../src/lib/deutsch-preps'
 import {
   ACHIEVEMENTS, RANKS, XP, TOPIC_DONE,
   rankFor, nextRank, dailyStreakFrom, todayStr, topicMastery,
@@ -523,6 +525,55 @@ const emptySnap = buildSnap({
 })
 if (emptySnap.xp !== 0 || emptySnap.learned < 0) fail('buildSnap повертає сміття на порожньому стані')
 void (['quiz', 'article', 'plural', 'verb'] as Kind[]) // перевірка типу Kind існує
+
+// 13. Займенники: таблиці відмінків
+console.log('\n=== Займенники ===')
+const pronIds = new Set<string>()
+for (const t of PRON_TABLES) {
+  if (pronIds.has(t.id)) fail(`дублікат таблиці займенників: ${t.id}`)
+  pronIds.add(t.id)
+  if (t.head.length < 2) fail(`заголовок таблиці ${t.id} закороткий`)
+  if (!t.rows.length) fail(`порожня таблиця: ${t.id}`)
+  if (ukBad.test(t.title.uk) || ukBad.test(t.intro?.uk ?? '')) fail(`рос. літери в uk-тексті таблиці ${t.id}`)
+  if (ruBad.test(t.title.ru) || ruBad.test(t.intro?.ru ?? '')) fail(`укр. літери в ru-тексті таблиці ${t.id}`)
+  for (const [ri, r] of t.rows.entries()) {
+    if (r.cells.length !== t.head.length - 1)
+      fail(`рядок ${ri} таблиці ${t.id}: клітинок ${r.cells.length}, очікувано ${t.head.length - 1}`)
+    if (!r.cells.some((c) => c !== null)) fail(`рядок ${ri} таблиці ${t.id} порожній`)
+    if (ukBad.test(r.label.uk)) fail(`рос. літери в uk-мітці ${t.id} рядок ${ri}`)
+    if (ruBad.test(r.label.ru)) fail(`укр. літери в ru-мітці ${t.id} рядок ${ri}`)
+  }
+}
+console.log(`Таблиць: ${PRON_TABLES.length}, німецьких форм: ${PRON_TOTAL}`)
+
+// 14. Прийменники: групи, приклади застосування, гігієна мов
+console.log('\n=== Прийменники ===')
+const groupIds = new Set<string>()
+for (const g of PREP_GROUPS) {
+  if (groupIds.has(g.id)) fail(`дублікат групи прийменників: ${g.id}`)
+  groupIds.add(g.id)
+  if (g.preps.length < 3) fail(`у групі ${g.id} менше ніж 3 прийменники`)
+  if (ukBad.test(g.title.uk) || ukBad.test(g.rule.uk)) fail(`рос. літери в uk-тексті групи ${g.id}`)
+  if (ruBad.test(g.title.ru) || ruBad.test(g.rule.ru)) fail(`укр. літери в ru-тексті групи ${g.id}`)
+  const deSeen = new Set<string>()
+  for (const p of g.preps) {
+    if (deSeen.has(p.de)) fail(`дублікат прийменника в групі ${g.id}: ${p.de}`)
+    deSeen.add(p.de)
+    if (!p.ex.length) fail(`немає прикладів застосування: ${p.de}`)
+    if (ukBad.test(p.meaning.uk)) fail(`рос. літери в uk-значенні «${p.de}»`)
+    if (ruBad.test(p.meaning.ru)) fail(`укр. літери в ru-значенні «${p.de}»`)
+    for (const [i, ex] of p.ex.entries()) {
+      if (!ex.de.trim() || !ex.uk.trim() || !ex.ru.trim()) fail(`порожнє поле прикладу ${i} у «${p.de}»`)
+      if (ukBad.test(ex.uk)) fail(`рос. літери в uk-прикладі «${ex.de}»: "${ex.uk}"`)
+      if (ruBad.test(ex.ru)) fail(`укр. літери в ru-прикладі «${ex.de}»: "${ex.ru}"`)
+    }
+    if (p.note) {
+      if (ukBad.test(p.note.uk)) fail(`рос. літери в uk-ноті «${p.de}»`)
+      if (ruBad.test(p.note.ru)) fail(`укр. літери в ru-ноті «${p.de}»`)
+    }
+  }
+}
+console.log(`Груп: ${PREP_GROUPS.length}, прийменників і сполук: ${PREP_TOTAL}`)
 
 console.log(errors === 0 ? '\nOK — усі перевірки пройдено ✔' : `\nПОМИЛОК: ${errors} ✘`)
 if (errors > 0) process.exit(1)

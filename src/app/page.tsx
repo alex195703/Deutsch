@@ -3,10 +3,12 @@
 // ============================================================
 // DEUTSCH A1 — тренажер німецької мови для початківців.
 // ------------------------------------------------------------
-// Одинадцять вкладок: Слова (73 теми трьох рівнів · 1 473 слова
+// Тринадцять вкладок: Слова (73 теми трьох рівнів · 1 473 слова
 // з прикладами-реченнями), Картки (фліп-картки з озвучкою), Вікторина (переклад
 // урозтріч), Артиклі (der/die/das), Дієслова (Präsens),
 // Модальні (6 модальних дієслів — таблиці, рамка, вправи),
+// Займенники (таблиці всіх відмінків з озвучкою форм),
+// Прийменники (групи за відмінком, приклади застосування),
 // Живі фрази (побутові формули, прислів'я, ідіоми),
 // Конструктор (речення у трьох часах, ствердження/заперечення),
 // Граматика (шпаргалка), Читанка (книжки, де тап по слову
@@ -31,9 +33,13 @@ import { BooksTab } from '@/components/reader'
 import { ProgressTab, AchievementToast } from '@/components/progress-panel'
 import { PhrasesTab } from '@/components/phrases-live'
 import { BuilderTab } from '@/components/builder-tab'
+import { PronounsTab } from '@/components/pronouns-tab'
+import { PrepsTab } from '@/components/preps-tab'
 import { IDIOM_TOTAL } from '@/lib/deutsch-idioms'
+import { PRON_TOTAL } from '@/lib/deutsch-pronouns'
+import { PREP_TOTAL } from '@/lib/deutsch-preps'
 
-type Tab = 'words' | 'cards' | 'quiz' | 'articles' | 'verbs' | 'modal' | 'phrases' | 'builder' | 'grammar' | 'books' | 'progress'
+type Tab = 'words' | 'cards' | 'quiz' | 'articles' | 'verbs' | 'modal' | 'pronouns' | 'preps' | 'phrases' | 'builder' | 'grammar' | 'books' | 'progress'
 
 export default function DeutschTrainer() {
   const L = useL()
@@ -49,6 +55,8 @@ export default function DeutschTrainer() {
     { id: 'articles', label: `🚦 ${L('Артиклі', 'Артикли')} ${NOUNS.length}` },
     { id: 'verbs', label: `⚡ ${L('Дієслова', 'Глаголы')} ${VERBS.length}` },
     { id: 'modal', label: `🗝️ ${L('Модальні', 'Модальные')} ${MODAL_TOTAL}` },
+    { id: 'pronouns', label: `👥 ${L('Займенники', 'Местоимения')} ${PRON_TOTAL}` },
+    { id: 'preps', label: `🔗 ${L('Прийменники', 'Предлоги')} ${PREP_TOTAL}` },
     { id: 'phrases', label: `🗣️ ${L('Живі фрази', 'Живые фразы')} ${IDIOM_TOTAL}` },
     { id: 'builder', label: `🧩 ${L('Конструктор', 'Конструктор')}` },
     { id: 'grammar', label: `📖 ${L('Граматика', 'Грамматика')} ${GRAMMAR.length}` },
@@ -77,8 +85,8 @@ export default function DeutschTrainer() {
           </h1>
           <p className="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-zinc-600 sm:text-base">
             {L(
-              'Слова з прикладами й озвучкою, картки, вікторина, артиклі, дієслова, модальні дієслова, живі фрази і прислівʼя, конструктор речень у трьох часах, шпаргалка з граматики та читанка, де кожне слово показує переклад за торканням. Прогрес зберігається у вашому браузері.',
-              'Слова с примерами и озвучкой, карточки, викторина, артикли, глаголы, модальные глаголы, живые фразы и пословицы, конструктор предложений в трёх временах, шпаргалка по грамматике и книжки, где каждое слово показывает перевод по касанию. Прогресс сохраняется в вашем браузере.',
+              'Слова з прикладами й озвучкою, картки, вікторина, артиклі, дієслова, модальні дієслова, таблиці займенників у всіх відмінках, прийменники з прикладами, живі фрази і прислівʼя, конструктор речень у трьох часах, шпаргалка з граматики та читанка, де кожне слово показує переклад за торканням. Прогрес зберігається у вашому браузері.',
+              'Слова с примерами и озвучкой, карточки, викторина, артикли, глаголы, модальные глаголы, таблицы местоимений во всех падежах, предлоги с примерами, живые фразы и пословицы, конструктор предложений в трёх временах, шпаргалка по грамматике и книжки, где каждое слово показывает перевод по касанию. Прогресс сохраняется в вашем браузере.',
             )}
           </p>
           <p className="mt-2 text-xs font-semibold text-emerald-700">
@@ -116,6 +124,8 @@ export default function DeutschTrainer() {
         {tab === 'articles' && <ArticlesTab record={record} />}
         {tab === 'verbs' && <VerbsTab />}
         {tab === 'modal' && <ModalTab record={record} />}
+        {tab === 'pronouns' && <PronounsTab />}
+        {tab === 'preps' && <PrepsTab />}
         {tab === 'phrases' && <PhrasesTab map={map} setLearned={setLearned} />}
         {tab === 'builder' && <BuilderTab record={record} />}
         {tab === 'grammar' && <GrammarTab />}
