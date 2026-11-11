@@ -1,7 +1,7 @@
 'use client'
 
 // ============================================================
-// DEUTSCH A1 — тренажер німецької мови для початківців.
+// DEUTSCH A1–B1 — тренажер німецької мови.
 // ------------------------------------------------------------
 // Чотирнадцять вкладок: Слова (75 тем трьох рівнів · 1 502 слова
 // з прикладами-реченнями), Картки (фліп-картки з озвучкою), Вікторина (переклад
@@ -47,7 +47,7 @@ type Tab = 'words' | 'cards' | 'quiz' | 'articles' | 'verbs' | 'modal' | 'pronou
 
 export default function DeutschTrainer() {
   const L = useL()
-  useTitle('Німецька A1 — тренажер професора Орлова О.В.', 'Немецкий A1 — тренажёр профессора Орлова А.В.')
+  useTitle('Німецька A1–B1 — тренажер професора Орлова О.В.', 'Немецкий A1–B1 — тренажёр профессора Орлова А.В.')
   const { map, record, setLearned, resetAll, learnedCount } = useProgress()
   const { rank, s: g } = useGamify()
   const [tab, setTab] = useState<Tab>('words')
@@ -83,7 +83,7 @@ export default function DeutschTrainer() {
             🇩🇪
           </div>
           <h1 className="mt-4 text-4xl font-black tracking-tight text-zinc-900">
-            Deutsch A1{' '}
+            Deutsch A1–B1{' '}
             <span className="text-2xl font-bold text-zinc-500">
               {L('· тренажер', '· тренажёр')}
             </span>
@@ -144,7 +144,7 @@ export default function DeutschTrainer() {
 
       <footer className="mt-auto border-t border-zinc-200 bg-white py-4">
         <p className="px-4 text-center text-xs leading-relaxed text-zinc-500">
-          Deutsch A1 · {L('прогрес — у вашому браузері · озвучка — засобами браузера',
+          Deutsch A1–B1 · {L('прогрес — у вашому браузері · озвучка — засобами браузера',
                              'прогресс — в вашем браузере · озвучка — средствами браузера')}
           {' · '}
           <a
