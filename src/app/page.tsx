@@ -79,9 +79,11 @@ export default function DeutschTrainer() {
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 pb-10">
         {/* Шапка */}
         <header className="pb-4 pt-12 text-center">
-          <div className="mx-auto inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-900 text-4xl shadow-lg">
-            🇩🇪
-          </div>
+          <img
+            src="/author.jpg"
+            alt={L('Професор Орлов О.В. — автор тренажера', 'Профессор Орлов А.В. — автор тренажёра')}
+            className="mx-auto block h-16 w-16 rounded-2xl object-cover shadow-lg ring-1 ring-zinc-200"
+          />
           <h1 className="mt-4 text-4xl font-black tracking-tight text-zinc-900">
             Deutsch A1–B1{' '}
             <span className="text-2xl font-bold text-zinc-500">
