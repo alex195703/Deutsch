@@ -45,6 +45,50 @@ import { PREP_TOTAL } from '@/lib/deutsch-preps'
 
 type Tab = 'words' | 'cards' | 'quiz' | 'articles' | 'verbs' | 'modal' | 'pronouns' | 'preps' | 'phrases' | 'builder' | 'grammar' | 'books' | 'exam' | 'progress'
 
+// Бейдж автора: аватар, при наведенні або кліку показує ім'я та email
+function AuthorBadge({
+  className = '',
+  size = 'h-16 w-16',
+  ring = 'ring-zinc-200',
+  img = '/avatar.png',
+  align = 'center',
+}: {
+  className?: string
+  size?: string
+  ring?: string
+  img?: string
+  align?: 'center' | 'left'
+}) {
+  const L = useL()
+  const [tip, setTip] = useState(false)
+  return (
+    <div className={`group relative inline-block ${className}`}>
+      <button
+        type="button"
+        onClick={() => setTip((v) => !v)}
+        aria-label={L('Автор — контакти', 'Автор — контакты')}
+        className="block cursor-pointer rounded-2xl focus:outline-none"
+      >
+        <img
+          src={img}
+          alt={L('Аватар автора', 'Аватар автора')}
+          className={`${size} rounded-2xl object-cover shadow-lg ring-1 ${ring}`}
+        />
+      </button>
+      <div
+        className={`absolute top-full z-30 mt-2 rounded-xl bg-zinc-900/95 px-3 py-2 text-center text-xs leading-relaxed text-white shadow-xl ring-1 ring-white/10 ${
+          align === 'center' ? 'left-1/2 -translate-x-1/2' : 'left-0'
+        } ${tip ? 'opacity-100' : 'pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100'}`}
+      >
+        <span className="block whitespace-nowrap font-semibold">{L('Автор: проф. Орлов О.В.', 'Автор: проф. Орлов А.В.')}</span>
+        <a href="mailto:avorlovav@gmail.com" className="whitespace-nowrap underline decoration-zinc-500 underline-offset-2">
+          avorlovav@gmail.com
+        </a>
+      </div>
+    </div>
+  )
+}
+
 export default function DeutschTrainer() {
   const L = useL()
   useTitle('Німецька A1–B1 — тренажер професора Орлова О.В.', 'Немецкий A1–B1 — тренажёр профессора Орлова А.В.')
@@ -79,11 +123,7 @@ export default function DeutschTrainer() {
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 pb-10">
         {/* Шапка */}
         <header className="pb-4 pt-12 text-center">
-          <img
-            src="/author.jpg"
-            alt={L('Професор Орлов О.В. — автор тренажера', 'Профессор Орлов А.В. — автор тренажёра')}
-            className="mx-auto block h-16 w-16 rounded-2xl object-cover shadow-lg ring-1 ring-zinc-200"
-          />
+          <AuthorBadge img="/author.jpg" />
           <h1 className="mt-4 text-4xl font-black tracking-tight text-zinc-900">
             Deutsch A1–B1{' '}
             <span className="text-2xl font-bold text-zinc-500">
